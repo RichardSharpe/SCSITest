@@ -22,9 +22,9 @@ public:
     SCSIPersistentReserveOut(ServiceAction action,
                              unsigned int allocationLength = 24);
     virtual ~SCSIPersistentReserveOut() {}
-    void SetReservationKey(const Forte::FString &key);
+    void SetReservationKey(const std::string &key);
     void SetReservationType(scsi_persistent_reservation_type type);
-    void SetServiceActionReservationKey(const Forte::FString &key);
+    void SetServiceActionReservationKey(const std::string &key);
     virtual void SetAPTPL(bool aptpl) { SetOutBufferBool(20, 0, aptpl); }
     virtual void SetAllTgPt(bool allTgPt) { SetOutBufferBool(20, 2, allTgPt); }
     virtual void SetTransportIdList(uint8_t *buffer, unsigned int length);
@@ -35,7 +35,7 @@ private:
 class SCSIPersistentReserveOutRegisterAndMove : public SCSIPersistentReserveOut
 {
 public:
-    SCSIPersistentReserveOutRegisterAndMove(const Forte::FString &transportId);
+    SCSIPersistentReserveOutRegisterAndMove(const std::string &transportId);
     virtual ~SCSIPersistentReserveOutRegisterAndMove() {}
 
     void SetRelativeTargetPortId(uint16_t id) { SetOutBufferShort(18, id); }

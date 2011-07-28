@@ -2,7 +2,6 @@
 #define __SCSIRequest_h__
 
 #include "Exception.h"
-#include "Forte.h"
 
 #include "iSCSILibWrapper.h"
 #include <boost/shared_array.hpp>
@@ -86,7 +85,7 @@ public:
     void SetOutBufferLong(unsigned int byteOffset,
                           uint32_t val);
     void SetOutBufferFString(unsigned int byteOffset,
-                             const Forte::FString &val);
+                             const std::string &val);
 
     boost::shared_array<uint8_t> GetInBuffer(void) { return mInBuffer; }
     unsigned int GetInBufferSize(void) { return mInBufferSize; }
@@ -105,7 +104,7 @@ public:
     uint8_t GetInBufferByte(unsigned int byteOffset) const;
     uint16_t GetInBufferShort(unsigned int byteOffset) const;
     uint32_t GetInBufferLong(unsigned int byteOffset) const;
-    Forte::FString GetInBufferFString(unsigned int byteOffset,
+    std::string GetInBufferFString(unsigned int byteOffset,
                                                   unsigned int byteLength) const;
 
     unsigned char GetSCSIErrorType() { return mTask->sense.error_type; }
@@ -123,10 +122,10 @@ public:
         scsi_clean_scsi_task(mTask);
     }
 
-    Forte::FString StatusString();
-    Forte::FString ErroTypeString();
-    Forte::FString SenseKeyString();
-    Forte::FString ASCQString();
+    std::string StatusString();
+    std::string ErroTypeString();
+    std::string SenseKeyString();
+    std::string ASCQString();
 
     scsi_task *GetTask(void) { return mTask; }
 
@@ -194,7 +193,7 @@ protected:
     void setBufferFString(uint8_t *buffer,
                                        unsigned int bufferLength,
                                        unsigned int byteOffset,
-                                       const Forte::FString &val);
+                                       const std::string &val);
 
 
     // Want these accessible ...

@@ -3,8 +3,6 @@
 
 #include "SCSIRequest.h"
 
-using namespace Forte;
-
 class SCSIPersistentReserveIn : public SCSIRequest
 {
 public:
@@ -30,7 +28,7 @@ public:
     SCSIPersistentReserveInReadKeys(unsigned int allocationLength = 255);
     virtual ~SCSIPersistentReserveInReadKeys() {}
     uint32_t GetKeyCount(void);
-    Forte::FString GetKey(unsigned int iterator);
+    std::string GetKey(unsigned int iterator);
 };
 
 class SCSIPersistentReserveInReadReservation : public SCSIPersistentReserveIn
@@ -38,7 +36,7 @@ class SCSIPersistentReserveInReadReservation : public SCSIPersistentReserveIn
 public:
     SCSIPersistentReserveInReadReservation(unsigned int allocationLength = 255);
     virtual ~SCSIPersistentReserveInReadReservation() {}
-    Forte::FString GetReservation(void);
+    std::tring GetReservation(void);
     scsi_persistent_reservation_type GetReservationType(void);
 };
 

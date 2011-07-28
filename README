@@ -1,0 +1,8 @@
+This is a software library that allows you to create SCSI tests.
+
+It layers on top of Ronnie Sahlberg's libiscsi packages (which is why it is
+called iSCSILibWrapper). It is written in C++.
+
+It could also wrap other facilities, like SCSI passthrough on Linux or Windows.
+(SCSI Passthrough using sg devices on Linux. There are examples of how to do
+SCSI Passthrough on Windows out there.)

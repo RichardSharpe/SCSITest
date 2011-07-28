@@ -44,9 +44,9 @@ public:
     uint8_t GetVersion(void) { return GetInBufferByte(2); }
     void SetEVPD(bool evpd) { mEvpd = evpd; if (mEvpd) setCdbByte(1, 0x01); }
 
-    Forte::FString GetT10VendorID();
-    Forte::FString GetProductID();
-    Forte::FString GetProductRev();
+    std::string GetT10VendorID();
+    std::string GetProductID();
+    std::string GetProductRev();
 
 protected:
     bool mEvpd;
@@ -74,7 +74,7 @@ class SCSIInquiryUnitSerialNumVPDPage : public SCSIInquiry
 public:
     SCSIInquiryUnitSerialNumVPDPage(unsigned int size = 16);
 
-    Forte::FString GetUnitSerialNum();
+    std::string GetUnitSerialNum();
 private:
 };
 
@@ -131,19 +131,19 @@ public:
 
     unsigned int GetOffset() const { return mOffset; }
     CodeSet GetCodeSet() const;
-    const Forte::FString GetCodeSetFString() const;
-    const Forte::FString GetProtocolIDFString() const;
+    const std::string GetCodeSetFString() const;
+    const std::string GetProtocolIDFString() const;
     IdentifierType GetIDType() const;
-    const Forte::FString GetIDTypeFString() const;
+    const std::string GetIDTypeFString() const;
     unsigned int GetIDLength() const {
         return mPage->GetInBufferByte(mOffset + 3);
     }
     bool GetPIV() const { return mPage->GetInBufferBool(mOffset + 1, 7); }
     Association GetAssociation() const;
-    const Forte::FString GetID() const {
+    const std::string GetID() const {
         return mPage->GetInBufferFString(mOffset + 4, GetIDLength());
     }
-    const Forte::FString GetHexID() const;
+    const std::string GetHexID() const;
     uint8_t GetIDShort(unsigned int offset) const {
         return mPage->GetInBufferShort(mOffset + 4 + offset);
     }
