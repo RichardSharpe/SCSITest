@@ -9,10 +9,14 @@ OBJECTS :=
 
 CINCLUDES := -I libiscsi/include 
 
+TARGETS :=
+
 DIRS = src examples
 
 INCLUDES = $(patsubst %, $(TOPDIR)/%/Makefile, $(DIRS))
 
+
+$(warning INCLUDES = $(INCLUDES))
 include $(INCLUDES)
 
 CFLAGS := -g $(CINCLUDES)
@@ -21,7 +25,8 @@ $(warning OBJECTS = $(OBJECTS))
 $(warning SOURCES = $(SOURCES))
 $(warning CINCLUDES = $(CINCLUDES))
 
-all: $(OBJECTS)
+# Gotta figure out a better method ... maybe shared libraries
+all: $(OBJECTS) $(TARGETS)
 
 # This does not handle .c files that depend on .h files ...
 $(OBJECTS): %.o: %.cpp

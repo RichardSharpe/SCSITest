@@ -1,11 +1,13 @@
-# Main Makefile for iSCSILibWrapper
+# Makefile for examples
 # This Makefile is not recursive. Rather it includes Makefiles from below
 
-DIRS = src examples
+dir = $(shell dirname $(lastword $(MAKEFILE_LIST)))
 
-INCLUDES = $(patsubst %,%/Makefile, $(DIRS))
+SRC := $(wildcard $(dir)/*.cpp)
+OBJ := $(patsubst %.cpp, %.o, $(SRC))
+TGTS := $(patsubst &.cpp, %, $(SRC))
 
-.PHONY:	all
+TARGETS += $(TGTS)
 
-all:
-	echo $(INCLUDES)	
+SOURCES += $(SRC)
+OBJECTS += $(OBJ)
