@@ -6,61 +6,65 @@
 
 #include "SCSIInquiry.h"
 
-Forte::FString SCSIInquiry::GetT10VendorID(void)
+std::string SCSIInquiry::GetT10VendorID(void)
 {
-    Forte::FString id;
+    EString id;
 
     if (mEvpd)
     {
-        id.Format("This request has the EVPD bit set and is for page %02X."
+        id.Format("Method Not Supported: "
+		  "This request has the EVPD bit set and is for page %02X."
                   " It does not support this request: %s!", 
                   mTask->cdb[2],
                   __func__);
-        throw ESCSIMethodNotSupported(id); 
+        throw CException(id); 
     }
 
     if (GetInBufferTransferSize() < 16)
     {
-        id.Format("Allocation Length (%u) too short for this request: %s."
+        id.Format("Method Not Supported: "
+		  "Allocation Length (%u) too short for this request: %s."
                   "Last request probably had a residual.",
                   mInBufferSize, __func__);
-        throw ESCSIInsufficientData(id);
+        throw CException(id);
     }
 
 
-    return GetInBufferFString(8, 8);
+    return GetInBufferString(8, 8);
 }
 
-Forte::FString SCSIInquiry::GetProductID()
+std::string SCSIInquiry::GetProductID()
 {
-    Forte::FString id;
+    EString id;
 
     if (mEvpd)
     {
-        id.Format("This request has the EVPD bit set and is for page %02X."
+        id.Format("Method Not Supported: "
+		  "This request has the EVPD bit set and is for page %02X."
                   " It does not support this request: %s!", 
                   mTask->cdb[2],
                   __func__);
-        throw ESCSIMethodNotSupported(id); 
+        throw CException(id); 
     }
 
-    return GetInBufferFString(16, 16);
+    return GetInBufferString(16, 16);
 }
 
-Forte::FString SCSIInquiry::GetProductRev()
+std::string SCSIInquiry::GetProductRev()
 {
-    Forte::FString rev;
+    EString rev;
 
     if (mEvpd)
     {
-        rev.Format("This request has the EVPD bit set and is for page %02X."
+        rev.Format("Method Not Supported: "
+		   "This request has the EVPD bit set and is for page %02X."
                    " It does not support this request: %s!", 
                    mTask->cdb[2],
                    __func__);
-        throw ESCSIMethodNotSupported(rev); 
+        throw CException(rev); 
     }
 
-    return GetInBufferFString(32, 4);
+    return GetInBufferString(32, 4);
 }
 
 SCSIInquirySupportedVPDPages::SCSIInquirySupportedVPDPages() :
@@ -97,12 +101,12 @@ SCSIInquiryUnitSerialNumVPDPage::SCSIInquiryUnitSerialNumVPDPage(unsigned int si
     setCdbByte(2, 0x80);
 }
 
-Forte::FString SCSIInquiryUnitSerialNumVPDPage::GetUnitSerialNum()
+std::string SCSIInquiryUnitSerialNumVPDPage::GetUnitSerialNum()
 {
-    Forte::FString usn;
+    EString usn;
 
     unsigned int serialLength = GetInBufferByte(3);
-    return GetInBufferFString(4,serialLength);
+    return GetInBufferString(4,serialLength);
 }
 
 SCSIDeviceID::CodeSet SCSIDeviceID::GetCodeSet() const
@@ -120,9 +124,9 @@ SCSIDeviceID::CodeSet SCSIDeviceID::GetCodeSet() const
     return static_cast<CodeSet>(ret);
 }
 
-const Forte::FString SCSIDeviceID::GetCodeSetFString() const
+const std::string SCSIDeviceID::GetCodeSetFString() const
 {
-    Forte::FString codeSet;
+    std::string codeSet;
 
     switch (GetCodeSet())
     {
@@ -143,9 +147,9 @@ const Forte::FString SCSIDeviceID::GetCodeSetFString() const
     return codeSet;
 }
 
-const Forte::FString SCSIDeviceID::GetProtocolIDFString() const
+const std::string SCSIDeviceID::GetProtocolIDFString() const
 {
-    Forte::FString protoId;
+    std::string protoId;
 
     if (!GetPIV())
     {
@@ -181,9 +185,9 @@ SCSIDeviceID::IdentifierType SCSIDeviceID::GetIDType() const
     return static_cast<IdentifierType>(idType);
 }
 
-const Forte::FString SCSIDeviceID::GetIDTypeFString() const
+const std::string SCSIDeviceID::GetIDTypeFString() const
 {
-    Forte::FString idType;
+    std::string idType;
 
     switch (GetIDType())
     {
@@ -227,14 +231,14 @@ SCSIDeviceID::Association SCSIDeviceID::GetAssociation() const
     return static_cast<Association>(mPage->GetInBufferBitArray(mOffset + 1, 4, 2));
 }
 
-const Forte::FString SCSIDeviceID::GetHexID() const
+const std::string SCSIDeviceID::GetHexID() const
 {
-    Forte::FString id;
+    std::string id;
     id.reserve(GetIDLength() * 2);
 
     for (unsigned int i = 0; i < GetIDLength(); i++)
     {
-         Forte::FString byte;
+         EString byte;
          byte.Format("%02X", mPage->GetInBufferByte(mOffset + 4 + i));
          id.append(byte);
     }

@@ -1,45 +1,66 @@
 /**
  * A SCSI Request class ... wraps some of Ronnie Sahlberg's stuff ...
  *
- * Author: Richard Sharpe
+ * Authors: Richard Sharpe and Asad Saeed
  */
+
+#include <arpa/inet.h>
+#include <cstdarg>
 
 #include "SCSIRequest.h"
 #include "SCSIInquiry.h"
 #include "SCSIReportLuns.h"
 #include "SCSIRead.h"
-
+#include "EString.h"
+#include "CException.h"
 
 #define CHECK_BUFFER_OVERREAD(_bufferSize, _byteOffset, _byteLength)           \
     if ((_byteOffset + _byteLength ) > _bufferSize) {                          \
-        Forte::FString estr;                                                   \
+        EString estr;                                                       \
         estr.Format("%s: Invalid byte Offset: buffer over read, "              \
                 "Buffer size: %u, accessing byte: %lu",                        \
                 __func__, _bufferSize,                                         \
                 (long unsigned int) (_byteOffset + _byteLength));              \
-        throw ESCSIExceptionBufferOverRead(estr);                              \
+        throw CException(estr);                                            \
     }                                                                          \
 
 #define CHECK_BUFFER_OVERFLOW(_bufferSize, _byteOffset, _byteLength)           \
     if ((_byteOffset + _byteLength) > _bufferSize) {                           \
-        Forte::FString estr;                                                   \
+        EString estr;                                                       \
         estr.Format("%s: Invalid byte Offset: buffer over flow, "              \
                 "Buffer size: %u, accessing byte: %lu",                        \
                 __func__, _bufferSize,                                         \
                 (long unsigned int) (_byteOffset + _byteLength));              \
-        throw ESCSIExceptionBufferOverFlow(estr);                              \
+        throw CException(estr);                                            \
     }                                                                          \
 
 #define CHECK_BYTE_BOUNDARY(_bitOffset, _bitLength)                            \
     if ((_bitOffset + _bitLength) > 8 ) {                                      \
-        Forte::FString estr;                                                   \
+        EString estr;                                                       \
         estr.Format("%s: Invalid bit Offset/Length, byte boundary crossed! "   \
                 "Bit Offset: %u, Bit Length: %u",                              \
                 __func__, _bitOffset, _bitLength);                             \
-        throw ESCSIExceptionByteBoundary(estr);                                \
+        throw CException(estr);                                            \
     }                                                                          \
 
+void EString::Format(const char *format, ...)
+{
+    va_list ap;
+    int size;
 
+    // We do one pass to get the size
+    va_start(ap, format);
+    size = vsnprintf(NULL, 0, format, ap);
+    va_end(ap);
+
+    // Now format the string after setting the size correctly
+    clear();
+    reserve(size + 1);
+    resize(size);
+    va_start(ap, format);
+    vsnprintf(const_cast<char *>(data()), size + 1, format, ap);
+    va_end(ap);
+}
 
 SCSIRequest::SCSIRequest() :
     mExecuted(false),
@@ -63,7 +84,10 @@ SCSIRequest::SCSIRequest(unsigned int cdbSize) :
     mInBufferSize(0)
 {
     if (cdbSize > sizeof(mTask->cdb)) {
-        throw ESCSIExceptionInvalidCDBSize();
+        EString estr;
+        estr.Format("%s: Invalid CDB Size: cdbSize: %u, task CDB size: %u",
+		__func__, cdbSize, mTask->cdb);
+        throw CException(estr);
     }
 
     mTask = new scsi_task;
@@ -84,7 +108,7 @@ SCSIRequest::SCSIRequest(unsigned int cdbSize,
     mInBufferSize(inBufferSize)
 {
     if (cdbSize > sizeof(mTask->cdb)) {
-        throw ESCSIExceptionInvalidCDBSize();
+        throw CException("Invalid CDB Size");
     }
 
     mTask = new scsi_task;
@@ -122,9 +146,9 @@ void SCSIRequest::setCdbLong(unsigned int byteOffset, uint32_t val)
 /*
  * Convert Status codes into a string
  */
-Forte::FString SCSIRequest::StatusString()
+std::string SCSIRequest::StatusString()
 {
-    Forte::FString errStr;
+    EString errStr;
 
     switch (mTask->status)
     {
@@ -158,9 +182,9 @@ Forte::FString SCSIRequest::StatusString()
 /*
  * Convert sense codes to strings
  */
-Forte::FString SCSIRequest::SenseKeyString()
+std::string SCSIRequest::SenseKeyString()
 {
-    Forte::FString errStr;
+    EString errStr;
     switch (mTask->sense.key)
     {
         case SCSI_SENSE_NO_SENSE:
@@ -200,9 +224,9 @@ Forte::FString SCSIRequest::SenseKeyString()
  * Convert ASCQ values to strings
  */
 
-Forte::FString SCSIRequest::ASCQString()
+std::string SCSIRequest::ASCQString()
 {
-    Forte::FString errStr;
+    EString errStr;
 
     switch (mTask->sense.ascq)
     {
@@ -272,10 +296,10 @@ void SCSIRequest::SetOutBufferLong(unsigned int byteOffset,
     setBufferLong(mOutBuffer.get(), mOutBufferSize, byteOffset, val);
 }
 
-void SCSIRequest::SetOutBufferFString(unsigned int byteOffset,
-                                      const Forte::FString &val)
+void SCSIRequest::SetOutBufferString(unsigned int byteOffset,
+                                      const std::string &val)
 {
-    setBufferFString(mOutBuffer.get(), mOutBufferSize, byteOffset, val);
+    setBufferString(mOutBuffer.get(), mOutBufferSize, byteOffset, val);
 
 }
 
@@ -288,17 +312,17 @@ void SCSIRequest::setBufferBitArray(uint8_t *buffer,
                                     uint8_t val)
 {
     if (!buffer)
-        throw ESCSIExceptionUninitializedBuffer();
+        throw CException("Uninitialized Buffer");
 
     CHECK_BUFFER_OVERFLOW(bufferLength, byteOffset, sizeof(uint8_t));
     CHECK_BYTE_BOUNDARY(startBit, bitLength);
 
     /* Check if value fits in bitLength, should be 0 (false) when shifted */
     if (val >> bitLength) {
-        Forte::FString estr;
+        EString estr;
         estr.Format("%s: Value is not the correct Length: "
                 "val=%u, expected length=%u", __func__, val, bitLength);
-        throw ESCSIExceptionInvalidValue(estr);
+        throw CException(estr);
     }
 
     /*
@@ -329,7 +353,7 @@ void SCSIRequest::setBufferByte(uint8_t *buffer,
                                 uint8_t val)
 {
     if (!buffer)
-        throw ESCSIExceptionUninitializedBuffer();
+        throw CException("Uninitialized Buffer");
 
     CHECK_BUFFER_OVERFLOW(bufferLength, byteOffset, sizeof(uint8_t));
 
@@ -342,7 +366,7 @@ void SCSIRequest::setBufferShort(uint8_t *buffer,
                                  uint16_t val)
 {
     if (!buffer)
-        throw ESCSIExceptionUninitializedBuffer();
+        throw CException("Uninitialized Buffer");
 
     CHECK_BUFFER_OVERFLOW(bufferLength, byteOffset, sizeof(uint16_t));
 
@@ -356,7 +380,7 @@ void SCSIRequest::setBufferLong(uint8_t *buffer,
                                 uint32_t val)
 {
     if (!buffer)
-        throw ESCSIExceptionUninitializedBuffer();
+        throw CException("Uninitialized Buffer");
 
     CHECK_BUFFER_OVERFLOW(bufferLength, byteOffset, sizeof(uint32_t));
 
@@ -364,13 +388,13 @@ void SCSIRequest::setBufferLong(uint8_t *buffer,
     memcpy(&buffer[byteOffset], &val, sizeof(uint32_t));
 }
 
-void SCSIRequest::setBufferFString(uint8_t *buffer,
+void SCSIRequest::setBufferString(uint8_t *buffer,
                                    unsigned int bufferLength,
                                    unsigned int byteOffset,
-                                   const Forte::FString &val)
+                                   const std::string &val)
 {
     if (!buffer)
-        throw ESCSIExceptionUninitializedBuffer();
+        throw CException("Uninitialized Buffer");
 
     CHECK_BUFFER_OVERFLOW(bufferLength, byteOffset, val.length());
 
@@ -401,7 +425,7 @@ uint8_t SCSIRequest::GetInBufferBitArray(unsigned int byteOffset,
                                          unsigned int bitLength) const
 {
     if (mTask->datain.data == NULL)
-        throw ESCSIExceptionUninitializedBuffer();
+        throw CException("Uninitialized Buffer");
 
     CHECK_BUFFER_OVERREAD((unsigned int)mTask->datain.size, byteOffset, sizeof(uint8_t));
     CHECK_BYTE_BOUNDARY(startBit, bitLength);
@@ -417,7 +441,7 @@ uint8_t SCSIRequest::GetInBufferBitArray(unsigned int byteOffset,
 
 uint8_t SCSIRequest::GetInBufferByte(unsigned int byteOffset) const {
     if (mTask->datain.data == NULL)
-        throw ESCSIExceptionUninitializedBuffer();
+        throw CException("Uninitialized Buffer");
 
     CHECK_BUFFER_OVERREAD((unsigned int)mTask->datain.size, byteOffset, sizeof(uint8_t));
     return mTask->datain.data[byteOffset];
@@ -428,7 +452,7 @@ uint16_t SCSIRequest::GetInBufferShort(unsigned int byteOffset) const {
     uint16_t val;
 
     if (mTask->datain.data == NULL)
-        throw ESCSIExceptionUninitializedBuffer();
+        throw CException("Uninitialized Buffer");
 
     CHECK_BUFFER_OVERREAD((unsigned int)mTask->datain.size, byteOffset, sizeof(uint16_t));
 
@@ -440,7 +464,7 @@ uint32_t SCSIRequest::GetInBufferLong(unsigned int byteOffset) const {
     uint32_t val = 0;
 
     if (mTask->datain.data == NULL)
-        throw ESCSIExceptionUninitializedBuffer();
+        throw CException("Uninitialized Buffer");
 
     CHECK_BUFFER_OVERREAD((unsigned int)mTask->datain.size, byteOffset, sizeof(uint32_t));
     memcpy(&val, &mTask->datain.data[byteOffset], sizeof(uint32_t));
@@ -448,15 +472,15 @@ uint32_t SCSIRequest::GetInBufferLong(unsigned int byteOffset) const {
 }
 
 
-Forte::FString SCSIRequest::GetInBufferFString(unsigned int byteOffset,
+std::string SCSIRequest::GetInBufferString(unsigned int byteOffset,
                                                unsigned int byteLength) const
 {
 
     if (mTask->datain.data == NULL)
-        throw ESCSIExceptionUninitializedBuffer();
+        throw CException("Uninitialized Buffer");
 
     CHECK_BUFFER_OVERREAD((unsigned int)mTask->datain.size, byteOffset, byteLength);
 
-    return Forte::FString((char *) &mTask->datain.data[byteOffset], byteLength);
+    return std::string((char *) &mTask->datain.data[byteOffset], byteLength);
 }
 

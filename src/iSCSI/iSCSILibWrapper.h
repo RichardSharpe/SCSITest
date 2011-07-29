@@ -2,10 +2,6 @@
 #define __iSCSILibWrapper_h__
 
 #include <vector>
-#include "FTrace.h"
-#include "FString.h"
-#include "Forte.h"
-#include "Exception.h"
 #include <signal.h>
 
 #include "SCSIRequest.h"
@@ -37,9 +33,6 @@ struct wrapper_client_state {
     int block_size;
 };
 
-EXCEPTION_CLASS(EiSCSILibWrapperISCSIError);
-EXCEPTION_CLASS(EiSCSILibWrapperSCSIError);
-
 class SCSIRequest;
 
 /**
@@ -55,12 +48,12 @@ public:
         mTarget(target), mAddress(address)
         {}
 
-    const Forte::FString &GetTarget() const { return mTarget; }
-    const Forte::FString &GetAddress() const { return mAddress; }
+    const std::string &GetTarget() const { return mTarget; }
+    const std::string &GetAddress() const { return mAddress; }
 
 private:
-    Forte::FString mTarget;
-    Forte::FString mAddress;
+    std::string mTarget;
+    std::string mAddress;
 };
 
 /**
@@ -94,13 +87,13 @@ public:
         mTarget = "iqn.2008-09.com.scalecomputing:scqadleader";
     }
 
-    void SetTarget(const Forte::FString &target) { mTarget = target; }
-    const Forte::FString &GetTarget(void) const { return mTarget; }
-    void SetAddress(const Forte::FString &address) { mAddress = address; }
-    const Forte::FString &GetAddress(void) const { return mAddress; }
-    const Forte::FString &GetError(void) const { return mErrorString; }
+    void SetTarget(const std::string &target) { mTarget = target; }
+    const std::string &GetTarget(void) const { return mTarget; }
+    void SetAddress(const std::string &address) { mAddress = address; }
+    const std::string &GetAddress(void) const { return mAddress; }
+    const std::string &GetError(void) const { return mErrorString; }
     bool IsRedirected() { return mRedirected; }
-    Forte::FString &GetNewAddress() { return mNewAddress; }
+    std::string &GetNewAddress() { return mNewAddress; }
 
     void iSCSIConnect(void);
     void iSCSIDiscoveryLogin(void);
@@ -151,13 +144,13 @@ protected:
     int mTimeout;
     bool mError;
     bool mRedirected;
-    Forte::FString mNewAddress;
-    Forte::FString mErrorString;
+    std::string mNewAddress;
+    std::string mErrorString;
     struct wrapper_client_state mClient;
     struct iscsi_context *mIscsi;
     struct pollfd mPfd;
-    Forte::FString mAddress;
-    Forte::FString mTarget;
+    std::string mAddress;
+    std::string mTarget;
     std::vector<WrapperDiscoveryPair> mDiscoveryPairs;
 };
 

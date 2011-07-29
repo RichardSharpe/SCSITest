@@ -25,20 +25,20 @@ uint32_t SCSIPersistentReserveInReadKeys::GetKeyCount(void) {
     return (GetInBufferLong(4) +1) / 8;
 }
 
-Forte::FString SCSIPersistentReserveInReadKeys::GetKey(unsigned int iterator) {
-    return GetInBufferFString((iterator + 1) * 8, 8);
+std::string SCSIPersistentReserveInReadKeys::GetKey(unsigned int iterator) {
+    return GetInBufferString((iterator + 1) * 8, 8);
 }
 
 SCSIPersistentReserveInReadReservation::SCSIPersistentReserveInReadReservation(
         unsigned int allocationLength) :
         SCSIPersistentReserveIn(READ_RESERVATION, allocationLength) {}
 
-Forte::FString SCSIPersistentReserveInReadReservation::GetReservation(void)
+std::string SCSIPersistentReserveInReadReservation::GetReservation(void)
 {
     if (GetInBufferLong(4) == 0){
-        return Forte::FString();
+        return std::string();
     }
-    return GetInBufferFString(8, 8);
+    return GetInBufferString(8, 8);
 }
 
 scsi_persistent_reservation_type
@@ -47,7 +47,7 @@ SCSIPersistentReserveInReadReservation::GetReservationType(void)
     scsi_persistent_reservation_type type;
     int bitArray;
     if (GetInBufferLong(4) == 0)
-        throw ESCSIInsufficientData();
+        throw CException("Insufficient Data");
 
     bitArray = GetInBufferBitArray(21, 0, 4);
 
@@ -64,7 +64,7 @@ SCSIPersistentReserveInReadReservation::GetReservationType(void)
     else if(bitArray == RESERVATION_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS)
         type = RESERVATION_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS;
     else
-        throw ESCSIExceptionInvalidValue();
+        throw CException("Invalid Value");
 
     return type;
 }

@@ -42,9 +42,10 @@ public:
     virtual void SetAPTPL(bool aptpl) { SetOutBufferBool(17, 0, aptpl); }
     void SetUNREG(bool unreg) { SetOutBufferBool(17, 1, unreg); }
 
-    virtual void SetAllTgPt(bool allTgPt) { throw ESCSIMethodNotSupported(); }
+    virtual void SetAllTgPt(bool allTgPt) 
+        { throw CException("Method Not Supported"); }
     virtual void SetTransportIdList(uint8_t *buffer, unsigned int length)
-    { throw ESCSIMethodNotSupported(); }
+        { throw CException("Method Not Supported"); }
 
 };
 

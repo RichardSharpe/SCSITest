@@ -1,7 +1,7 @@
 # Main Makefile for iSCSILibWrapper
 # This Makefile is not recursive. Rather it includes Makefiles from below
 
-DIRS = SCSI iSCSI
+DIRS = SCSI iSCSI common
 
 dir = $(shell dirname $(lastword $(MAKEFILE_LIST)))
 

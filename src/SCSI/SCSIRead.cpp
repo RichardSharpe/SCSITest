@@ -6,8 +6,10 @@
 
 #include "SCSIRequest.h"
 #include "SCSIRead.h"
+#include <boost/shared_array.hpp>
 
-SCSIRead10::SCSIRead10(unsigned int transferLength, shared_array<uint8_t> buffer) :
+SCSIRead10::SCSIRead10(unsigned int transferLength, 
+                       boost::shared_array<uint8_t> buffer) :
     SCSIRequest(10), 
     mLBA(0)
 {

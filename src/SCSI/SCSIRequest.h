@@ -1,10 +1,16 @@
 #ifndef __SCSIRequest_h__
 #define __SCSIRequest_h__
 
-#include "Exception.h"
+#include <exception>
+#include <cstdarg>
+#include <string>
+
+#include <boost/shared_array.hpp>
 
 #include "iSCSILibWrapper.h"
-#include <boost/shared_array.hpp>
+
+#include "EString.h"
+#include "CException.h"
 
 extern "C" {
     #include "scsi-lowlevel.h"
@@ -20,19 +26,6 @@ extern "C" {
  * This class should provide a basic set of services that can be added to by
  * the actual request classes, like SCSI_Test_Unit_Ready, SCSI_Inquiry, etc
  **/
-
-EXCEPTION_CLASS(ESCSIException);
-EXCEPTION_SUBCLASS(ESCSIException, ESCSIExceptionBadCDBOffset);
-EXCEPTION_SUBCLASS(ESCSIException, ESCSIExceptionInvalidCDBSize);
-EXCEPTION_SUBCLASS(ESCSIException, ESCSIExceptionNoTransport);
-EXCEPTION_SUBCLASS(ESCSIException, ESCSIMethodNotSupported);
-EXCEPTION_SUBCLASS(ESCSIException, ESCSIInsufficientData);
-EXCEPTION_SUBCLASS(ESCSIException, ESCSIExceptionUninitializedBuffer);
-EXCEPTION_SUBCLASS(ESCSIException, ESCSIExceptionBufferOverRead);
-EXCEPTION_SUBCLASS(ESCSIException, ESCSIExceptionBufferOverFlow);
-EXCEPTION_SUBCLASS(ESCSIException, ESCSIExceptionByteBoundary);
-EXCEPTION_SUBCLASS(ESCSIException, ESCSIExceptionInvalidValue);
-
 
 class SCSIRequest
 {
@@ -84,8 +77,8 @@ public:
                            uint16_t val);
     void SetOutBufferLong(unsigned int byteOffset,
                           uint32_t val);
-    void SetOutBufferFString(unsigned int byteOffset,
-                             const std::string &val);
+    void SetOutBufferString(unsigned int byteOffset,
+                            const std::string &val);
 
     boost::shared_array<uint8_t> GetInBuffer(void) { return mInBuffer; }
     unsigned int GetInBufferSize(void) { return mInBufferSize; }
@@ -104,8 +97,8 @@ public:
     uint8_t GetInBufferByte(unsigned int byteOffset) const;
     uint16_t GetInBufferShort(unsigned int byteOffset) const;
     uint32_t GetInBufferLong(unsigned int byteOffset) const;
-    std::string GetInBufferFString(unsigned int byteOffset,
-                                                  unsigned int byteLength) const;
+    std::string GetInBufferString(unsigned int byteOffset,
+                                  unsigned int byteLength) const;
 
     unsigned char GetSCSIErrorType() { return mTask->sense.error_type; }
     enum scsi_sense_key GetSCSISenseKey() { return mTask->sense.key; }
@@ -163,37 +156,37 @@ protected:
 
     /* Helper methods for writing values into buffers */
     void setBufferBitArray(uint8_t *buffer,
-                                        unsigned int bufferLength,
-                                        unsigned int byteOffset,
-                                        unsigned int startBit, // starts at 0
-                                        unsigned int bitLength,
-                                        uint8_t val);
+                           unsigned int bufferLength,
+                           unsigned int byteOffset,
+                           unsigned int startBit, // starts at 0
+                           unsigned int bitLength,
+                           uint8_t val);
 
     void setBufferBool(uint8_t *buffer,
-                                    unsigned int bufferLength,
-                                    unsigned int byteOffset,
-                                    unsigned int bitOffset,
-                                    bool val);
+                       unsigned int bufferLength,
+                       unsigned int byteOffset,
+                       unsigned int bitOffset,
+                       bool val);
 
     void setBufferByte(uint8_t *buffer,
-                                    unsigned int bufferLength,
-                                    unsigned int byteOffset,
-                                    uint8_t val);
+                       unsigned int bufferLength,
+                       unsigned int byteOffset,
+                       uint8_t val);
 
     void setBufferShort(uint8_t *buffer,
-                                     unsigned int bufferLength,
-                                     unsigned int byteOffset,
-                                     uint16_t val);
+                        unsigned int bufferLength,
+                        unsigned int byteOffset,
+                        uint16_t val);
 
     void setBufferLong(uint8_t *buffer,
-                                    unsigned int bufferLength,
-                                    unsigned int byteOffset,
-                                    uint32_t val);
+                       unsigned int bufferLength,
+                       unsigned int byteOffset,
+                       uint32_t val);
 
-    void setBufferFString(uint8_t *buffer,
-                                       unsigned int bufferLength,
-                                       unsigned int byteOffset,
-                                       const std::string &val);
+    void setBufferString(uint8_t *buffer,
+                         unsigned int bufferLength,
+                         unsigned int byteOffset,
+                         const std::string &val);
 
 
     // Want these accessible ...

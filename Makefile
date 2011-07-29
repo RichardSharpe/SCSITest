@@ -26,3 +26,7 @@ all: $(OBJECTS)
 # This does not handle .c files that depend on .h files ...
 $(OBJECTS): %.o: %.cpp
 	g++ -c $(CFLAGS) $< -o $@
+
+.PHONY:	clean
+clean:
+	rm -f $(OBJECTS)

@@ -6,8 +6,6 @@
  **/
 
 #include <algorithm>
-#include "Forte.h"
-#include "FString.h"
 #include <signal.h>
 #include "iSCSILibWrapper.h"
 
@@ -29,7 +27,6 @@ iSCSILibWrapper::iSCSILibWrapper(int timeout)
 
 iSCSILibWrapper::~iSCSILibWrapper()
 {
-    FTRACE;
     // This ungracefully shuts down the session
     if (mClient.connected)
         iscsi_disconnect(mIscsi);
@@ -138,11 +135,11 @@ void iSCSILibWrapper::iSCSIConnect(void)
         throw EiSCSILibWrapperISCSIError(mErrorString);
     }
 
-    Forte::FString target = Forte::FString(mAddress);
+    std::string target = std::string(mAddress);
 
     // If it does not have the port number, add it on. This is actually not
     // The best test ... but we will often only be given strings from discovery.
-    if (target.find(":3260") == Forte::FString::npos)
+    if (target.find(":3260") == std::string::npos)
         target.append(":3260");
 
     mClient.message = "Hello ScaleServer";
@@ -364,13 +361,13 @@ void iSCSILibWrapper::iSCSINormalLogin(void)
     // Now check to see if we have been redirected and recover the new address.
     if (mClient.error)
     {
-        Forte::FString errStr(iscsi_get_error(mIscsi));
+        std::string errStr(iscsi_get_error(mIscsi));
 
         if (errStr.find("Target moved temporarily(257)") != 
-            Forte::FString::npos)
+            std::string::npos)
         {
             mRedirected = true;
-            mNewAddress = Forte::FString(iscsi_get_target_address(mIscsi));
+            mNewAddress = std::string(iscsi_get_target_address(mIscsi));
         }
     }
 }
@@ -388,7 +385,7 @@ void iSCSILibWrapper::iSCSINormalLoginWithRedirect(void)
     // We just perform all the correct steps
     if (IsRedirected())
     {
-        Forte::FString newAddress = GetNewAddress();
+        std::string newAddress = GetNewAddress();
 
         iSCSIDisconnect();
 

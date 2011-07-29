@@ -36,10 +36,8 @@ class SCSIPersistentReserveInReadReservation : public SCSIPersistentReserveIn
 public:
     SCSIPersistentReserveInReadReservation(unsigned int allocationLength = 255);
     virtual ~SCSIPersistentReserveInReadReservation() {}
-    std::tring GetReservation(void);
+    std::string GetReservation(void);
     scsi_persistent_reservation_type GetReservationType(void);
 };
-
-
 
 #endif

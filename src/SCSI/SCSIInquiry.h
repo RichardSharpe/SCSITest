@@ -141,7 +141,7 @@ public:
     bool GetPIV() const { return mPage->GetInBufferBool(mOffset + 1, 7); }
     Association GetAssociation() const;
     const std::string GetID() const {
-        return mPage->GetInBufferFString(mOffset + 4, GetIDLength());
+        return mPage->GetInBufferString(mOffset + 4, GetIDLength());
     }
     const std::string GetHexID() const;
     uint8_t GetIDShort(unsigned int offset) const {

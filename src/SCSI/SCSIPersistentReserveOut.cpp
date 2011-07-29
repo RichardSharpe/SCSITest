@@ -1,4 +1,5 @@
 #include "SCSIPersistentReserveOut.h"
+#include <boost/shared_array.hpp>
 
 SCSIPersistentReserveOut::SCSIPersistentReserveOut(ServiceAction action,
                                                    unsigned int allocationLength) :
@@ -17,28 +18,28 @@ void SCSIPersistentReserveOut::SetReservationType(scsi_persistent_reservation_ty
     setCdbBitArray(2, 0, 4, type);
 }
 
-void SCSIPersistentReserveOut::SetReservationKey(const Forte::FString &key) {
+void SCSIPersistentReserveOut::SetReservationKey(const std::string &key) {
     if (key.length() != 8)
-        throw ESCSIExceptionInvalidValue();
+        throw CException("Invalid Value");
 
-    SetOutBufferFString(0, key);
+    SetOutBufferString(0, key);
 }
 
 void SCSIPersistentReserveOut::SetServiceActionReservationKey(
-        const Forte::FString &key)
+        const std::string &key)
 {
     if (key.length() != 8)
-        throw ESCSIExceptionInvalidValue();
+        throw CException("Invalid Value");
 
-    SetOutBufferFString(8, key);
+    SetOutBufferString(8, key);
 }
 
 void SCSIPersistentReserveOut::SetTransportIdList(uint8_t *buffer, unsigned int length) {
     if (buffer == NULL || length == 0)
-        throw ESCSIExceptionInvalidValue();
+        throw CException("Invalid Value");
 
     // copy shared_array, end of function call will call oldbuffer to be destroyed
-    shared_array<uint8_t> oldBuffer = mOutBuffer;
+    boost::shared_array<uint8_t> oldBuffer = mOutBuffer;
 
     createOutBuffer(length + 24);
     setCdbShort(0x07, length + 24);
@@ -50,15 +51,15 @@ void SCSIPersistentReserveOut::SetTransportIdList(uint8_t *buffer, unsigned int 
 
 
 SCSIPersistentReserveOutRegisterAndMove::SCSIPersistentReserveOutRegisterAndMove(
-        const Forte::FString &transportId) :
+        const std::string &transportId) :
         SCSIPersistentReserveOut(PR_REGISTER_AND_MOVE, 24 + transportId.length())
 {
     unsigned int transportIdLength = transportId.length();
 
     if (transportIdLength < 24 || transportIdLength % 4 != 0)
-        throw ESCSIExceptionInvalidValue();
+        throw CException("Invalid Value");
 
     SetOutBufferLong(20, transportIdLength);
-    SetOutBufferFString(24, transportId);
+    SetOutBufferString(24, transportId);
 }
 
