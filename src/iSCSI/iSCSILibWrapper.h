@@ -5,6 +5,7 @@
 #include <signal.h>
 
 #include "SCSIRequest.h"
+#include "EString.h"
 
 #include <poll.h>
 extern "C" {
@@ -145,7 +146,7 @@ protected:
     bool mError;
     bool mRedirected;
     std::string mNewAddress;
-    std::string mErrorString;
+    EString mErrorString;
     struct wrapper_client_state mClient;
     struct iscsi_context *mIscsi;
     struct pollfd mPfd;

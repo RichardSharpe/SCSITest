@@ -7,7 +7,10 @@
 
 #include <algorithm>
 #include <signal.h>
+#include <errno.h>
 #include "iSCSILibWrapper.h"
+#include "EString.h"
+#include "CException.h"
 
 extern "C" {
 	#include "iscsi-private.h"
@@ -30,6 +33,8 @@ iSCSILibWrapper::~iSCSILibWrapper()
     // This ungracefully shuts down the session
     if (mClient.connected)
         iscsi_disconnect(mIscsi);
+    if (mClient.error_message)
+        free(mClient.error_message);
     if (mClient.target_name)
         free(mClient.target_name);
     if (mClient.target_address)
@@ -60,7 +65,7 @@ void iSCSILibWrapper::ServiceISCSIEvents()
                 mErrorString.Format("%s: poll timed out: %d mSec",
                                     __func__,
                                     mTimeout);
-            throw EiSCSILibWrapperISCSIError(mErrorString);
+            throw CException(mErrorString);
         }
 
         if (iscsi_service(mIscsi, mPfd.revents) < 0)
@@ -69,14 +74,17 @@ void iSCSILibWrapper::ServiceISCSIEvents()
             mErrorString.Format("%s: iscsi_service failed with: %s",
                                __func__,
                               iscsi_get_error(mIscsi));
-            throw EiSCSILibWrapperISCSIError(mErrorString);
+            throw CException(mErrorString);
         }
     }
 
     // Get the iscsi error if there is one at this point
     if (mClient.error != 0)
     {
-        mErrorString.Format("%s", iscsi_get_error(mIscsi));
+        mErrorString.Format("%s: %s: %s", __func__,
+                            mClient.error_message, 
+                            iscsi_get_error(mIscsi));
+	throw CException(mErrorString);
     }
 }
 
@@ -90,8 +98,11 @@ static void connect_cb(struct iscsi_context *iscsi, int status, void *command_da
 
     if (status)
     {
-        hlog(HLOG_ERROR, "%s: connection failed: %s",
-             __func__, iscsi_get_error(iscsi));
+	EString error;
+        error.Format("%s: connection failed: %s",
+                     __func__, 
+                     iscsi_get_error(iscsi));
+	client->error_message =  strdup(error.c_str());
         client->finished = 1;
         client->error = 1;
         return;
@@ -111,7 +122,7 @@ void iSCSILibWrapper::iSCSIConnect(void)
         mError = true;
         mErrorString.Format("%s: Cannot connect! Already connected!",
                            __func__);
-        throw EiSCSILibWrapperISCSIError(mErrorString);
+        throw CException(mErrorString);
     }
 
     mIscsi = iscsi_create_context(mTarget.c_str());
@@ -122,7 +133,7 @@ void iSCSILibWrapper::iSCSIConnect(void)
                            __func__,
                            mTarget.c_str(),
                            iscsi_get_error(mIscsi));
-        throw EiSCSILibWrapperISCSIError(mErrorString);
+        throw CException(mErrorString);
     }
 
     if (iscsi_set_alias(mIscsi, "scqadleader") != 0)
@@ -132,7 +143,7 @@ void iSCSILibWrapper::iSCSIConnect(void)
                            __func__,
                            mTarget.c_str(),
                             iscsi_get_error(mIscsi));
-        throw EiSCSILibWrapperISCSIError(mErrorString);
+        throw CException(mErrorString);
     }
 
     std::string target = std::string(mAddress);
@@ -142,7 +153,7 @@ void iSCSILibWrapper::iSCSIConnect(void)
     if (target.find(":3260") == std::string::npos)
         target.append(":3260");
 
-    mClient.message = "Hello ScaleServer";
+    mClient.message = "Hello Server";
     mClient.has_discovered_target = 0;
     mClient.finished = 0;
 
@@ -154,7 +165,7 @@ void iSCSILibWrapper::iSCSIConnect(void)
                            __func__,
                            target.c_str(),
                            iscsi_get_error(mIscsi));
-        throw EiSCSILibWrapperISCSIError(mErrorString);
+        throw CException(mErrorString);
     }
 
     ServiceISCSIEvents();
@@ -195,7 +206,7 @@ void iSCSILibWrapper::iSCSIDiscoveryLogin(void)
             mErrorString.Format("%s: Login not possible without a connection!",
                                __func__);
         mError = true;
-        throw EiSCSILibWrapperISCSIError(mErrorString);
+        throw CException(mErrorString);
     }
 
     iscsi_set_session_type(mIscsi, ISCSI_SESSION_DISCOVERY);
@@ -209,7 +220,7 @@ void iSCSILibWrapper::iSCSIDiscoveryLogin(void)
                            mTarget.c_str(),
                            iscsi_get_error(mIscsi));
         mError = true;
-        throw EiSCSILibWrapperISCSIError(mErrorString);
+        throw CException(mErrorString);
     }
 
     ServiceISCSIEvents();
@@ -226,8 +237,11 @@ static void discovery_cb(struct iscsi_context *iscsi, int status, void *command_
 
     if (status)
     {
-        hlog(HLOG_ERROR, "Failed to perform discovery: %s",
-             iscsi_get_error(iscsi));
+        EString error;
+        error.Format("%s: Failed to perform discovery: %s",
+                     __func__,
+                     iscsi_get_error(iscsi));
+        client->error_message = strdup(error.c_str());
         client->finished = 1;
         client->error = 1;
         return;
@@ -263,7 +277,7 @@ void iSCSILibWrapper::iSCSIPerformDiscovery(void)
                           __func__,
                           mTarget.c_str(),
                           iscsi_get_error(mIscsi));
-        throw EiSCSILibWrapperISCSIError(mErrorString);
+        throw CException(mErrorString);
     }
 
     ServiceISCSIEvents();
@@ -279,8 +293,11 @@ static void discoverylogout_cb(struct iscsi_context *iscsi, int status, void *co
 
     if (status)
     {
-        hlog(HLOG_ERROR, "Failed to logout: %s",
-             iscsi_get_error(iscsi));
+	EString error;
+        error.Format("%s: Failed to logout: %s",
+                     __func__,
+                     iscsi_get_error(iscsi));
+        client->error_message = strdup(error.c_str());
         client->finished = 1;
         client->error = 1;
         return;
@@ -304,7 +321,7 @@ void iSCSILibWrapper::iSCSIDiscoveryLogout(void)
                           mTarget.c_str(),
                           iscsi_get_error(mIscsi));
         mError = true;
-        throw EiSCSILibWrapperISCSIError(mErrorString);
+        throw CException(mErrorString);
     }
 
     ServiceISCSIEvents();
@@ -328,7 +345,7 @@ void iSCSILibWrapper::iSCSINormalLogin(void)
                                __func__,
                                mTarget.c_str());
         mError = true;
-        throw EiSCSILibWrapperISCSIError(mErrorString);
+        throw CException(mErrorString);
     }
 
     mClient.finished = 0;
@@ -343,7 +360,7 @@ void iSCSILibWrapper::iSCSINormalLogin(void)
                            mTarget.c_str(),
                            iscsi_get_error(mIscsi));
         mError = true;
-        throw EiSCSILibWrapperISCSIError(mErrorString);
+        throw CException(mErrorString);
     }
 
     if (iscsi_login_async(mIscsi, discoverylogin_cb, this))
@@ -353,7 +370,7 @@ void iSCSILibWrapper::iSCSINormalLogin(void)
                            mTarget.c_str(),
                            iscsi_get_error(mIscsi));
         mError = true;
-        throw EiSCSILibWrapperISCSIError(mErrorString);
+        throw CException(mErrorString);
     }
 
     ServiceISCSIEvents();
@@ -414,7 +431,7 @@ void iSCSILibWrapper::iSCSINormalLogout(void)
                                __func__,
                                mTarget.c_str());
         mError = true;
-        throw EiSCSILibWrapperISCSIError(mErrorString);
+        throw CException(mErrorString);
     }
 
     mClient.finished = 0;
@@ -426,7 +443,7 @@ void iSCSILibWrapper::iSCSINormalLogout(void)
                            mTarget.c_str(),
                            iscsi_get_error(mIscsi));
         mError = true;
-        throw EiSCSILibWrapperISCSIError(mErrorString);
+        throw CException(mErrorString);
     }
 
     ServiceISCSIEvents();
@@ -443,7 +460,7 @@ void iSCSILibWrapper::iSCSIDisconnect(void)
                             __func__,
                             mTarget.c_str());
         mError = true;
-        throw EiSCSILibWrapperISCSIError(mErrorString);
+        throw CException(mErrorString);
     }
 
     if (mClient.connected && iscsi_disconnect(mIscsi))
@@ -453,7 +470,7 @@ void iSCSILibWrapper::iSCSIDisconnect(void)
                            mAddress.c_str(),
                            iscsi_get_error(mIscsi));
         mError = true;
-        throw EiSCSILibWrapperISCSIError(mErrorString);
+        throw CException(mErrorString);
     }
 
     mClient.finished = 0;
@@ -498,24 +515,24 @@ void iSCSILibWrapper::iSCSIExecSCSISync(SCSIRequest &request, unsigned int lun)
                                __func__,
                                mTarget.c_str());
         mError = true;
-        throw EiSCSILibWrapperISCSIError(mErrorString);
+        throw CException(mErrorString);
     }
 
     // You cannot re-execute a request unless you reset it
     if (request.IsExecuted())
     {
-        Forte::FString estr;
+        EString estr;
         estr.Format("%s: SCSI Request already executed!", __func__);
         mError = true;
-        throw EiSCSILibWrapperSCSIError(estr);
+        throw CException(estr);
     }
 
     if (!task)  // Throw an exception
     {
-        Forte::FString estr;
+        EString estr;
         estr.Format("%s: SCSIRequest does not have a task defined", __func__);
         mError = true;
-        throw EiSCSILibWrapperSCSIError(estr);
+        throw CException(estr);
     }
 
     switch (task->xfer_dir)
@@ -548,11 +565,11 @@ void iSCSILibWrapper::iSCSIExecSCSISync(SCSIRequest &request, unsigned int lun)
                                  &data,
                                  this))
     {
-        Forte::FString estr;
+        EString estr;
         estr.Format("%s: Error executing SCSI request: %s", __func__,
                     iscsi_get_error(mIscsi));
         mError = true;
-        throw EiSCSILibWrapperISCSIError(mErrorString);
+        throw CException(mErrorString);
     }
 
     ServiceISCSIEvents();
@@ -605,7 +622,7 @@ void iSCSILibWrapper::iSCSILUNReset(uint32_t lun)
                                __func__,
                                mTarget.c_str());
         mError = true;
-        throw EiSCSILibWrapperISCSIError(mErrorString);
+        throw CException(mErrorString);
     }
 
     mClient.finished = 0;
@@ -618,11 +635,11 @@ void iSCSILibWrapper::iSCSILUNReset(uint32_t lun)
                               lun_reset_cb,
                               this))
     {
-        Forte::FString estr;
+        EString estr;
         estr.Format("%s: Error executing SCSI request: %s", __func__,
                     iscsi_get_error(mIscsi));
         mError = true;
-        throw EiSCSILibWrapperISCSIError(mErrorString);
+        throw CException(mErrorString);
     }
 
     ServiceISCSIEvents();

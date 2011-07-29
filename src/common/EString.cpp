@@ -4,7 +4,9 @@
  * Richard Sharpe. Cribbed from elsewhere.
  */
 
+#include <stdio.h>
 #include <cstdarg>
+#include <string>
 #include "EString.h"
 
 /*
@@ -13,7 +15,7 @@
  * string. Since this is mostly used in error paths we don't care about 
  * efficiency.
  */
-void SCSIString::Format(const char *format, ...)
+void EString::Format(const char *format, ...)
 {
     va_list ap;
     int size;
