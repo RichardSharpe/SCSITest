@@ -31,7 +31,7 @@ $(warning TARGETS = $(TARGETS))
 all:	$(OBJECTS) $(TARGETS)
 
 $(TARGETS): %: %.o
-	g++ -o $@ $< $(OBJECTS) -L libiscsi/lib -l iscsi
+	g++ -o $@ $< $(filter-out $<, $(OBJECTS)) -L libiscsi/lib -l iscsi
 
 $(OBJECTS): %.o: %.cpp
 	g++ $(CFLAGS) -c $< -o $@
