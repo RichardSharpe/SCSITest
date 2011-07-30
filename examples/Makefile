@@ -5,9 +5,12 @@ dir = $(shell dirname $(lastword $(MAKEFILE_LIST)))
 
 SRC := $(wildcard $(dir)/*.cpp)
 OBJ := $(patsubst %.cpp, %.o, $(SRC))
-TGTS := $(patsubst &.cpp, %, $(SRC))
+TGTS := $(patsubst %.cpp, %, $(SRC))
+
+$(warning TGTS = $(TGTS))
 
 TARGETS += $(TGTS)
 
 SOURCES += $(SRC)
 OBJECTS += $(OBJ)
+

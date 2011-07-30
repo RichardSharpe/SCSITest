@@ -43,25 +43,6 @@
         throw CException(estr);                                            \
     }                                                                          \
 
-void EString::Format(const char *format, ...)
-{
-    va_list ap;
-    int size;
-
-    // We do one pass to get the size
-    va_start(ap, format);
-    size = vsnprintf(NULL, 0, format, ap);
-    va_end(ap);
-
-    // Now format the string after setting the size correctly
-    clear();
-    reserve(size + 1);
-    resize(size);
-    va_start(ap, format);
-    vsnprintf(const_cast<char *>(data()), size + 1, format, ap);
-    va_end(ap);
-}
-
 SCSIRequest::SCSIRequest() :
     mExecuted(false),
     mLinkBit(false),

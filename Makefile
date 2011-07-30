@@ -1,7 +1,7 @@
 # Main Makefile for iSCSILibWrapper
 # This Makefile is not recursive. Rather it includes Makefiles from below
 
-TOPDIR = $(shell pwd)
+TOPDIR := $(shell pwd)
 
 SOURCES :=
 
@@ -13,25 +13,29 @@ TARGETS :=
 
 DIRS = src examples
 
-INCLUDES = $(patsubst %, $(TOPDIR)/%/Makefile, $(DIRS))
+INCLUDES := $(patsubst %, $(TOPDIR)/%/Makefile, $(DIRS))
 
-
-$(warning INCLUDES = $(INCLUDES))
+# Include all we need ...
+# $(warning INCLUDES = $(INCLUDES))
 include $(INCLUDES)
 
-CFLAGS := -g $(CINCLUDES)
+CFLAGS = -g $(CINCLUDES)
 
-$(warning OBJECTS = $(OBJECTS))
-$(warning SOURCES = $(SOURCES))
+#$(warning OBJECTS = $(OBJECTS))
+#$(warning SOURCES = $(SOURCES))
 $(warning CINCLUDES = $(CINCLUDES))
+$(warning CFLAGS = $(CFLAGS))
+$(warning TARGETS = $(TARGETS))
 
 # Gotta figure out a better method ... maybe shared libraries
-all: $(OBJECTS) $(TARGETS)
+all:	$(OBJECTS) $(TARGETS)
 
-# This does not handle .c files that depend on .h files ...
+$(TARGETS): %: %.o
+	g++ -o $@ $< $(OBJECTS) -L libiscsi/lib -l iscsi
+
 $(OBJECTS): %.o: %.cpp
-	g++ -c $(CFLAGS) $< -o $@
+	g++ $(CFLAGS) -c $< -o $@
 
 .PHONY:	clean
 clean:
-	rm -f $(OBJECTS)
+	rm -f $(OBJECTS) $(TARGETS)
