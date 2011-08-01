@@ -51,6 +51,129 @@ bool myiSCSILibWrapper::iSCSINormalLoginTest(void)
     return true;
 }
 
+// Look at some of the LUNs. The SCSIReportLuns object is passed by reference
+// It contains info about the actual LUN numbers ...
+static bool ReportOnLuns(myiSCSILibWrapper &iscsi,
+                         SCSIReportLuns &reportLuns)
+{
+    for (unsigned int i = 0; i < reportLuns.GetLunCount(); i++)
+    {
+        SCSITestUnitReady tur;
+
+        unsigned int lun = reportLuns.GetLun(i);
+
+        printf("\nAbout to issue TEST UNIT READY for lun %u\n", lun);
+
+        iscsi.iSCSIExecSCSISync(tur, lun);
+        if (tur.GetStatus() != SCSI_STATUS_GOOD)
+        {
+            // Check what the problem is
+            if (tur.GetStatus() != SCSI_STATUS_GOOD)
+            {
+                unsigned int ascq = tur.GetSCSIASCQ();
+
+                if (ascq == SCSI_SENSE_ASCQ_BUS_RESET)
+                    printf("Received expected BUS RESET\n");
+                else 
+                {
+                    printf("Test Unit Ready failed: "
+                           "Status: %s, SenseKey: %s, ASCQ: %s\n",
+                           tur.StatusString().c_str(),
+                           tur.SenseKeyString().c_str(),
+                           tur.ASCQString().c_str());
+                    return false;
+                }
+            }
+            else
+            {
+                printf("Test Unit Ready failed: "
+                       "Status: %s, SenseKey: %s, ASCQ: %s\n",
+                       tur.StatusString().c_str(),
+                       tur.SenseKeyString().c_str(),
+                       tur.ASCQString().c_str());
+                return false;
+            }
+        }
+
+        // Now, send another TUR to see if all OK.
+        SCSITestUnitReady tur2;
+
+        iscsi.iSCSIExecSCSISync(tur2, lun);
+
+        if (tur2.GetStatus() != SCSI_STATUS_GOOD)
+        {
+            printf("Test Unit Ready failed: "
+                   "Status: %s, SenseKey: %s, ASCQ: %s\n",
+                   tur.StatusString().c_str(),
+                   tur.SenseKeyString().c_str(),
+                   tur.ASCQString().c_str());
+            return false;
+        }
+
+        // Send an Inquiry
+
+        SCSIInquiry inq;  // Just a normal inquiry
+
+        iscsi.iSCSIExecSCSISync(inq, lun);
+
+        if (inq.GetStatus() != SCSI_STATUS_GOOD)
+        {
+            printf("Inquiry fauled: Status %s, SenseKey: %s, ASCQ: %s\n",
+                   inq.StatusString().c_str(),
+                   inq.SenseKeyString().c_str(),
+                   inq.ASCQString().c_str());
+            return false;
+        }
+
+        printf("T10 Vendore ID for LUN %u is \"%s\"\n",
+               lun, inq.GetT10VendorID().c_str());
+        printf("Product ID for LUN %u is \"%s\"\n",
+               lun, inq.GetProductID().c_str());
+        printf("Product Rev for LUN %u is \"%s\"\n",
+               lun, inq.GetProductRev().c_str());
+
+        SCSIInquirySupportedVPDPages supported;
+
+        iscsi.iSCSIExecSCSISync(supported, lun);
+
+        if (inq.GetStatus() != SCSI_STATUS_GOOD)
+        {
+            printf("Inquiry fauled: Status %s, SenseKey: %s, ASCQ: %s\n",
+                   supported.StatusString().c_str(),
+                   supported.SenseKeyString().c_str(),
+                   supported.ASCQString().c_str());
+            return false;
+        }
+
+        if (supported.HasPage(0))
+        {
+            printf("Lun %u supports VPD Page 0, checking page 0x80\n", lun);
+
+            if (supported.HasPage(0x80))
+            {
+                SCSIInquiryUnitSerialNumVPDPage usn;
+
+                iscsi.iSCSIExecSCSISync(usn, lun);
+
+                if (usn.GetStatus() == SCSI_STATUS_GOOD)
+                {
+                    printf("LUN %u Unit Serial Num is \"%s\"\n", lun,
+                           usn.GetUnitSerialNum().c_str());
+                }
+            }
+
+            // More pages left as an exercise for the reader ...
+
+        }
+        else
+        {
+            printf("Weird, LUN %u does not suppot VPD Page 0!\n", lun);
+        }
+    }
+
+    return true;
+}
+
 /*
  * Connect to the first arg ...
  */
@@ -118,12 +241,35 @@ int main(int argc, char *argv[])
         iscsi.iSCSINormalLogin();
 
         // Now, find out how many LUNs there are.
-        SCSIReportLuns reportLuns;
+        SCSIReportLuns *reportLuns = new SCSIReportLuns();
 
         printf("\nSending REPORT LUNS request\n");
-        iscsi.iSCSIExecSCSISync(reportLuns, 0);  // Always against LUN 0
+        iscsi.iSCSIExecSCSISync(*reportLuns, 0);  // Always against LUN 0
 
-        printf("Number of LUNs reported: %u\n", reportLuns.GetLunCount());
+        printf("Number of LUNs reported: %u\n", reportLuns->GetLunCount());
+
+        // Check if we had a SCSI_RESIDUAL_OVERFLOW
+        if (reportLuns->GetResidualType() == SCSI_RESIDUAL_OVERFLOW)
+        {
+            // Try again
+            printf("Underflow on REPORT LUNS!\n");
+            unsigned int size = reportLuns->GetInBufferTransferSize() +
+                                reportLuns->GetResidual();
+            printf("Trying REPORT LUNS with larger buffer size of %u\n", size);
+            delete reportLuns;
+
+            // Allocate a new object with the correct buffer size
+            reportLuns = new SCSIReportLuns(size);
+
+            iscsi.iSCSIExecSCSISync(*reportLuns, 0);
+        }
+
+        if (!ReportOnLuns(iscsi, *reportLuns)) {
+            delete reportLuns;  // Gotta free it!
+            throw CException("Error reporting on LUNS");
+        }
+
+        delete reportLuns;  // Free that object
 
         printf("\nLogging out and disconnecting\n");
         iscsi.iSCSINormalLogout();
