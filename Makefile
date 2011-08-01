@@ -19,16 +19,26 @@ INCLUDES := $(patsubst %, $(TOPDIR)/%/Makefile, $(DIRS))
 # $(warning INCLUDES = $(INCLUDES))
 include $(INCLUDES)
 
-CFLAGS = -g $(CINCLUDES)
+CPPFLAGS = $(CINCLUDES)
+CFLAGS = -g $(CPPFLAGS)
 
 #$(warning OBJECTS = $(OBJECTS))
-#$(warning SOURCES = $(SOURCES))
-$(warning CINCLUDES = $(CINCLUDES))
-$(warning CFLAGS = $(CFLAGS))
-$(warning TARGETS = $(TARGETS))
+$(warning SOURCES = $(SOURCES))
+#$(warning CINCLUDES = $(CINCLUDES))
+#$(warning CFLAGS = $(CFLAGS))
+#$(warning TARGETS = $(TARGETS))
 
 # Gotta figure out a better method ... maybe shared libraries
 all:	$(OBJECTS) $(TARGETS)
+
+# Generate .d files from .c files
+%.d: %.cpp
+	@set -e; rm -f $@; \
+	$(CC) -M $(CPPFLAGS) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+include $(SOURCES:.cpp=.d)
 
 $(TARGETS): %: %.o
 	g++ -o $@ $< $(filter-out $<, $(OBJECTS)) -L libiscsi/lib -l iscsi
@@ -39,3 +49,5 @@ $(OBJECTS): %.o: %.cpp
 .PHONY:	clean
 clean:
 	rm -f $(OBJECTS) $(TARGETS)
+
+# Should have a dist-clean as well to delete the .d files

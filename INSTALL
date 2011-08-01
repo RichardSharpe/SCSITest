@@ -1,0 +1,14 @@
+Firstly, download Ronnie Sahlberg's libiscsi source and build it.
+
+Next, make a symbolic link from the top directory here to where you have put 
+the libiscsi package:
+
+   ln -s /path/to/libiscsi ./libiscsi
+
+Then just run the make file.
+
+Note, this uses a non-recursive make.
+
+You are expected to write your own test programs that link agains the routines.
+
+Eventually there might be a shared library.

@@ -7,7 +7,7 @@ SRC := $(wildcard $(dir)/*.cpp)
 OBJ := $(patsubst %.cpp, %.o, $(SRC))
 TGTS := $(patsubst %.cpp, %, $(SRC))
 
-$(warning TGTS = $(TGTS))
+# $(warning TGTS = $(TGTS))
 
 TARGETS += $(TGTS)
 
