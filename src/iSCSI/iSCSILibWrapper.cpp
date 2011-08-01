@@ -359,6 +359,10 @@ void iSCSILibWrapper::iSCSIConnect(void)
     }
 
     ServiceISCSIEvents();
+
+    // Add to the background task
+    iSCSIBackGround::GetInstance().AddConnection(*this);
+
 }
 
 /*
@@ -386,6 +390,9 @@ static void discoverylogin_cb(struct iscsi_context *iscsi, int status, void *com
  */
 void iSCSILibWrapper::iSCSIDiscoveryLogin(void)
 {
+    // Remove us from the background thread
+    iSCSIBackGround::GetInstance().RemoveConnection(*this);
+
     if (!mClient.connected || mClient.error)
     {
         if (mClient.error)
@@ -414,6 +421,10 @@ void iSCSILibWrapper::iSCSIDiscoveryLogin(void)
     }
 
     ServiceISCSIEvents();
+
+    // Add to the background task
+    iSCSIBackGround::GetInstance().AddConnection(*this);
+
 }
 
 /*
@@ -451,6 +462,9 @@ static void discovery_cb(struct iscsi_context *iscsi, int status, void *command_
  */
 void iSCSILibWrapper::iSCSIPerformDiscovery(void)
 {
+    // Remove us from the background thread
+    iSCSIBackGround::GetInstance().RemoveConnection(*this);
+
     mClient.finished = 0;
 
     // Clean up those pairs ... from any previous discovery
@@ -471,6 +485,10 @@ void iSCSILibWrapper::iSCSIPerformDiscovery(void)
     }
 
     ServiceISCSIEvents();
+
+    // Add to the background task
+    iSCSIBackGround::GetInstance().AddConnection(*this);
+
 }
 
 /*
@@ -502,6 +520,9 @@ static void discoverylogout_cb(struct iscsi_context *iscsi, int status, void *co
  */
 void iSCSILibWrapper::iSCSIDiscoveryLogout(void)
 {
+    // Remove us from the background thread
+    iSCSIBackGround::GetInstance().RemoveConnection(*this);
+
     mClient.finished = 0;
 
     if (iscsi_logout_async(mIscsi, discoverylogout_cb, this))
@@ -515,6 +536,10 @@ void iSCSILibWrapper::iSCSIDiscoveryLogout(void)
     }
 
     ServiceISCSIEvents();
+
+    // Add to the background task
+    iSCSIBackGround::GetInstance().AddConnection(*this);
+
 }
 
 /*
@@ -523,6 +548,9 @@ void iSCSILibWrapper::iSCSIDiscoveryLogout(void)
  */
 void iSCSILibWrapper::iSCSINormalLogin(void)
 {
+    // Remove us from the background thread
+    iSCSIBackGround::GetInstance().RemoveConnection(*this);
+
     if (!mClient.connected || mClient.error)
     {
         if (mClient.error)
@@ -565,6 +593,9 @@ void iSCSILibWrapper::iSCSINormalLogin(void)
 
     ServiceISCSIEvents();
 
+    // Add to the background task
+    iSCSIBackGround::GetInstance().AddConnection(*this);
+
     // Now check to see if we have been redirected and recover the new address.
     if (mClient.error)
     {
@@ -586,6 +617,8 @@ void iSCSILibWrapper::iSCSINormalLogin(void)
  */
 void iSCSILibWrapper::iSCSINormalLoginWithRedirect(void)
 {
+    // We don't need to remove ourselves and add ourselves back because
+    // the methods we will call will do that.
     iSCSINormalLogin();
 
     // If we were redirected, then disconnect and start again
@@ -609,6 +642,9 @@ void iSCSILibWrapper::iSCSINormalLoginWithRedirect(void)
  */
 void iSCSILibWrapper::iSCSINormalLogout(void)
 {
+    // Remove us from the background thread
+    iSCSIBackGround::GetInstance().RemoveConnection(*this);
+
     if (!mClient.connected || mClient.error)
     {
         if (mClient.error)
@@ -637,6 +673,10 @@ void iSCSILibWrapper::iSCSINormalLogout(void)
     }
 
     ServiceISCSIEvents();
+
+    // Add to the background task
+    iSCSIBackGround::GetInstance().AddConnection(*this);
+
 }
 
 /*
@@ -644,6 +684,9 @@ void iSCSILibWrapper::iSCSINormalLogout(void)
  */
 void iSCSILibWrapper::iSCSIDisconnect(void)
 {
+    // Remove us from the background thread
+    iSCSIBackGround::GetInstance().RemoveConnection(*this);
+
     if (!mIscsi)
     {
         mErrorString.Format("%s: Disconnect from target %s not possible without a connection!",
@@ -690,6 +733,9 @@ static void exec_cb(struct iscsi_context *iscsi, int status, void *command_data,
  */
 void iSCSILibWrapper::iSCSIExecSCSISync(SCSIRequest &request, unsigned int lun)
 {
+    // Remove us from the background thread
+    iSCSIBackGround::GetInstance().RemoveConnection(*this);
+
     struct iscsi_data data;
     struct scsi_task *task = request.GetTask();
 
@@ -764,6 +810,9 @@ void iSCSILibWrapper::iSCSIExecSCSISync(SCSIRequest &request, unsigned int lun)
 
     ServiceISCSIEvents();
 
+    // Add to the background task
+    iSCSIBackGround::GetInstance().AddConnection(*this);
+
     /*
      * Now, transfer any data back ... this might have to change if Ronnie
      * adds support for it in the library ...
@@ -800,6 +849,9 @@ static void lun_reset_cb(struct iscsi_context *iscsi, int status, void *command_
 
 void iSCSILibWrapper::iSCSILUNReset(uint32_t lun)
 {
+    // Remove us from the background thread
+    iSCSIBackGround::GetInstance().RemoveConnection(*this);
+
     if (!mClient.connected || mClient.error)
     {
         if (mClient.error)
@@ -833,4 +885,8 @@ void iSCSILibWrapper::iSCSILUNReset(uint32_t lun)
     }
 
     ServiceISCSIEvents();
+
+    // Add to the background task
+    iSCSIBackGround::GetInstance().AddConnection(*this);
+
 }
