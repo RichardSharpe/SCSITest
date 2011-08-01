@@ -40,8 +40,7 @@ public:
     virtual ~SCSIRequest()
     {
         // We are not responsible for any inBuffer or outBuffer ...
-        scsi_clean_scsi_task(mTask);
-        delete mTask;
+        scsi_free_scsi_task(mTask);
     }
 
     /*enum SCSI_STATUS_CODES
@@ -108,12 +107,6 @@ public:
 
     void SetExecuted(void) { mExecuted = true; }
     bool IsExecuted(void) { return mExecuted; }
-
-    virtual void Reset(void) 
-    {
-        mExecuted = false;
-        scsi_clean_scsi_task(mTask);
-    }
 
     std::string StatusString();
     std::string ErroTypeString();
@@ -191,6 +184,9 @@ protected:
 
     // Want these accessible ...
     struct scsi_task *mTask;
+
+    // Dirty little secret ... 
+    void scsi_clean_scsi_task(struct scsi_task *task);
 
 protected:
     bool mExecuted;

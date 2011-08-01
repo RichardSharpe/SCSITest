@@ -32,13 +32,8 @@ public:
 
     ~SCSIInquiry() {}
 
-    virtual void Reset(void)
-    {
-        ResetInBuffer();
-        SCSIRequest::Reset();
-    }
-
-    uint8_t GetPeripheralQualifier(void) { return GetInBufferBitArray(0, 5, 3); }
+    uint8_t GetPeripheralQualifier(void) 
+        { return GetInBufferBitArray(0, 5, 3); }
     uint8_t GetPeripheralType(void) { return GetInBufferBitArray(0, 0, 5); }
     bool GetRMB(void) { return GetInBufferBool(1, 7); }
     uint8_t GetVersion(void) { return GetInBufferByte(2); }

@@ -12,36 +12,37 @@
 #include "SCSIReportLuns.h"
 #include "SCSIRead.h"
 #include "EString.h"
+#include <exception>
 #include "CException.h"
 
 #define CHECK_BUFFER_OVERREAD(_bufferSize, _byteOffset, _byteLength)           \
     if ((_byteOffset + _byteLength ) > _bufferSize) {                          \
-        EString estr;                                                       \
+        EString estr;                                                          \
         estr.Format("%s: Invalid byte Offset: buffer over read, "              \
                 "Buffer size: %u, accessing byte: %lu",                        \
                 __func__, _bufferSize,                                         \
                 (long unsigned int) (_byteOffset + _byteLength));              \
-        throw CException(estr);                                            \
-    }                                                                          \
+        throw CException(estr);                                                \
+    }
 
 #define CHECK_BUFFER_OVERFLOW(_bufferSize, _byteOffset, _byteLength)           \
     if ((_byteOffset + _byteLength) > _bufferSize) {                           \
-        EString estr;                                                       \
+        EString estr;                                                          \
         estr.Format("%s: Invalid byte Offset: buffer over flow, "              \
                 "Buffer size: %u, accessing byte: %lu",                        \
                 __func__, _bufferSize,                                         \
                 (long unsigned int) (_byteOffset + _byteLength));              \
-        throw CException(estr);                                            \
-    }                                                                          \
+        throw CException(estr);                                                \
+    }
 
 #define CHECK_BYTE_BOUNDARY(_bitOffset, _bitLength)                            \
     if ((_bitOffset + _bitLength) > 8 ) {                                      \
-        EString estr;                                                       \
+        EString estr;                                                          \
         estr.Format("%s: Invalid bit Offset/Length, byte boundary crossed! "   \
                 "Bit Offset: %u, Bit Length: %u",                              \
                 __func__, _bitOffset, _bitLength);                             \
-        throw CException(estr);                                            \
-    }                                                                          \
+        throw CException(estr);                                                \
+    }
 
 SCSIRequest::SCSIRequest() :
     mExecuted(false),
@@ -51,7 +52,9 @@ SCSIRequest::SCSIRequest() :
     mInBuffer(NULL),
     mInBufferSize(0)
 {
-    mTask = new scsi_task;
+    mTask = (struct scsi_task *)malloc(sizeof(scsi_task));
+    if (mTask == NULL)
+        throw std::bad_alloc();  // Convert to standard exception
     memset(mTask, 0, sizeof(scsi_task));
     mTask->cdb_size = 6;
     mTask->xfer_dir = SCSI_XFER_NONE;
@@ -71,7 +74,9 @@ SCSIRequest::SCSIRequest(unsigned int cdbSize) :
         throw CException(estr);
     }
 
-    mTask = new scsi_task;
+    mTask = (struct scsi_task *)malloc(sizeof(scsi_task));
+    if (mTask == NULL)
+        throw std::bad_alloc();  // Convert to standard exception
     memset(mTask, 0, sizeof(scsi_task));
     mTask->cdb_size = cdbSize;
     mTask->xfer_dir = SCSI_XFER_NONE;
@@ -92,7 +97,9 @@ SCSIRequest::SCSIRequest(unsigned int cdbSize,
         throw CException("Invalid CDB Size");
     }
 
-    mTask = new scsi_task;
+    mTask = (struct scsi_task *)malloc(sizeof(scsi_task));
+    if (mTask == NULL)
+        throw std::bad_alloc();  // Convert to standard exception
     memset(mTask, 0, sizeof(scsi_task));
     mTask->cdb_size = cdbSize;
     mTask->xfer_dir = SCSI_XFER_NONE;
