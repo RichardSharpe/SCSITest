@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
     }
     catch (CException &e)
     {
-
+        printf("Caught Exception: %s\n", e.getDesc().c_str());
     }
 
     printf("Test done!\n");
