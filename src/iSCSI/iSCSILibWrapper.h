@@ -25,6 +25,9 @@
 
 #include "SCSIRequest.h"
 #include "EString.h"
+#include <boost/thread/thread.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition.hpp>
 
 #include <poll.h>
 extern "C" {
@@ -76,10 +79,51 @@ private:
     std::string mAddress;
 };
 
+class iSCSILibWrapper;
+
+/**
+ * class iSCSIBackGround
+ *
+ * A singleton class that allows certain operations, like NOP_IN to be handled
+ * when a connection is not actively being dealt with.
+ */
+class iSCSIBackGround
+{
+public:
+    ~iSCSIBackGround();
+
+    static iSCSIBackGround& GetInstance();
+
+    void AddConnection(iSCSILibWrapper &iscsi);
+    void RemoveConnection(iSCSILibWrapper &iscsi);
+
+    // Stop the background thread if no connections
+    void StopBackGroundTask();
+
+private:
+    iSCSIBackGround() {}
+    iSCSIBackGround(iSCSIBackGround const &); // Hidden copy const
+    iSCSIBackGround& operator=(iSCSIBackGround const&); // and assignment
+
+    // Start the background thread ...
+    void StartBackGroundTask();
+
+    // The Background thread ...
+    void BackGroundThread();  // We call it like a method
+
+    boost::mutex mWorkMutex;
+    boost::condition mWorkCond;
+    boost::thread mThread;
+
+    bool mStop;
+
+    std::vector<iSCSILibWrapper *> mConnections;
+};
+
 /**
  * \class iSCSILibWrapper
  *
- * A wrapper class around the libiscsi library to make life easier for SCQAD
+ * A wrapper class around the libiscsi library to make life easier for
  * test writers.
  *
  * It is intended to be subclassed so that users can replace certain methods
@@ -90,6 +134,8 @@ private:
 
 class iSCSILibWrapper
 {
+friend class iSCSIBackGround;
+
 protected:
 
 public:
@@ -141,6 +187,14 @@ public:
     void AddDiscoveryPair(const char *target, const char *addr)
         { mDiscoveryPairs.push_back(WrapperDiscoveryPair(target, addr)); }
 
+    // Setting and getting the time when this should be looked at
+    void SetTimeoutTime()
+    {
+        mBGTimeout = boost::get_system_time() + boost::posix_time::seconds(15);
+    }
+
+    boost::system_time GetTimeoutTime() { return mBGTimeout; }
+
     /*
      * These methods provide default ways of testing for success, but can be
      * overridden in the case that the user has a different or more rigorous
@@ -159,7 +213,7 @@ public:
 
 protected:
 
-    void ServiceISCSIEvents();
+    void ServiceISCSIEvents(bool oneShot = false);
 
     int mTimeout;
     bool mError;
@@ -172,6 +226,7 @@ protected:
     std::string mAddress;
     std::string mTarget;
     std::vector<WrapperDiscoveryPair> mDiscoveryPairs;
+    boost::system_time mBGTimeout;
 };
 
 #endif

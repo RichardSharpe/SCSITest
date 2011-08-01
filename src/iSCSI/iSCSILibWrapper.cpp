@@ -35,6 +35,172 @@ extern "C" {
 	#include "iscsi-private.h"
 }
 
+// We should make sure that the thread has died ...
+iSCSIBackGround::~iSCSIBackGround()
+{
+    StopBackGroundTask();  // All gone after here ...
+}
+
+iSCSIBackGround& iSCSIBackGround::GetInstance()
+{
+    static iSCSIBackGround theInstance; // Note, static
+
+    return theInstance;
+}
+
+void iSCSIBackGround::StartBackGroundTask()
+{
+    mStop = false;
+    //printf("%s: Starting background thread", __func__);
+    mThread = boost::thread(&iSCSIBackGround::BackGroundThread, this);
+}
+
+void iSCSIBackGround::StopBackGroundTask()
+{
+    //printf("%s: checking whether to stop thread", __func__);
+    // Only do this if no connections left
+    if (mThread.joinable() && !mConnections.size())
+    {
+       // printf("%s: stopping background thread", __func__);
+
+        boost::mutex::scoped_lock lock(mWorkMutex);
+
+        mStop = true;
+
+        lock.unlock();  // Have to let go some time
+
+        mThread.join();
+    }
+}
+
+//
+// Take the work mutex and then add the iscsi object to the end of the
+// vector. The object itself tells us when it should time out. Also
+// signal the work condition variable to have the background thread take notice
+//
+// When ever the connection is controlled by the background thread the
+// foreground has to take the object off the list to work on it. It must also
+// take the mutex to do that.
+void iSCSIBackGround::AddConnection(iSCSILibWrapper &iscsi)
+{
+    boost::mutex::scoped_lock lock(mWorkMutex); // Take the lock ...
+
+    if (!mThread.joinable())
+    {
+        StartBackGroundTask();
+    }
+
+    iscsi.SetTimeoutTime();
+
+    mConnections.push_back(&iscsi);
+
+    mWorkCond.notify_one();
+}
+
+void iSCSIBackGround::RemoveConnection(iSCSILibWrapper &iscsi)
+{
+    unsigned int index = mConnections.size();
+
+    boost::mutex::scoped_lock lock(mWorkMutex); // Take the lock ...
+
+    // Now find and remove the object of interest
+    for (unsigned int i = 0; i < mConnections.size(); i++)
+    {
+        if (mConnections[i] == &iscsi)
+        {
+            index = i;
+            break;
+        }
+    }
+
+    if (index < mConnections.size())
+    {
+        mConnections.erase(mConnections.begin() + index);  // Remove it
+        mWorkCond.notify_one();  // Perhaps we should unlock first
+    }
+    else
+    {
+        EString errorStr;
+
+        errorStr.Format("%s: No such item in vector: %s",
+                        __func__,
+                        strerror(errno));
+        throw CException(errorStr);
+    }
+}
+
+//
+// The background thread. We wait for a condition variable to be signalled
+// or a timeout to occur. If we get a timeout, it must be for the top item
+// on the queue, so check to see if there are any incoming data on the
+// connection and if so, process it.
+//
+// We will never get in the way of a real request response because the 
+// iSCSILibWrapper must take connections away from us when it wants to 
+// perform requests
+
+void iSCSIBackGround::BackGroundThread()
+{
+    //printf("%s started", __func__);
+
+    boost::system_time timeOut;
+
+    bool signalled = true;
+
+    while (!mStop)
+    {
+        boost::mutex::scoped_lock lock(mWorkMutex);
+
+        // Figure out when to check again
+        if (mConnections.size())
+        {
+            timeOut = mConnections[0]->GetTimeoutTime();
+        }
+        else
+        {
+            timeOut = boost::get_system_time() + boost::posix_time::seconds(30);
+        }
+
+        signalled = mWorkCond.timed_wait(lock, timeOut);
+
+        // Do some work ... we have the lock ...
+
+        //printf("%s should do some work ... signalled = %s",
+        //     __func__, (signalled ? "yes" : "timed out"));
+
+        if (!signalled)
+        {
+            if (mConnections.size())
+            {
+                mConnections[0]->ServiceISCSIEvents(true);
+
+                mConnections[0]->SetTimeoutTime();
+
+                if (mConnections.size() > 1)
+                {
+                    mConnections.push_back(mConnections[0]);
+                    mConnections.erase(mConnections.begin());
+                }
+
+            }
+            else
+            {
+                printf("%s: No connections after timeout!", __func__);
+            }
+        }
+
+        // We don't actually do anything if we were signalled ...
+
+        if (mStop)
+        {
+            //printf("%s: We were signalled to stop!", __func__);
+            break;
+        }
+
+    }
+    //printf("%s stopping", __func__);
+}
+
 /*
  * Constructor ...
  */
@@ -62,11 +228,11 @@ iSCSILibWrapper::~iSCSILibWrapper()
         iscsi_destroy_context(mIscsi);
 }
 
-void iSCSILibWrapper::ServiceISCSIEvents()
+void iSCSILibWrapper::ServiceISCSIEvents(bool oneShot)
 {
     // Event loop to drive the connection through its paces
 
-    while (mClient.finished == 0 && mClient.error == 0)
+    while (mClient.finished == 0 && mClient.error == 0 || oneShot)
     {
         int res = 0;
 
@@ -94,6 +260,11 @@ void iSCSILibWrapper::ServiceISCSIEvents()
                                __func__,
                               iscsi_get_error(mIscsi));
             throw CException(mErrorString);
+        }
+
+        if (oneShot)
+        {
+            break;
         }
     }
 
