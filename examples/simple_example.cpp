@@ -88,18 +88,54 @@ int main(int argc, char *argv[])
         std::vector<WrapperDiscoveryPair> &DiscoveryList =
                                                iscsi.GetDiscoveryList();
 
-       if (DiscoveryList.size() == 0) 
-           throw CException("No targets defined!");
+        if (DiscoveryList.size() == 0) 
+            throw CException("No targets defined!");
 
-       for (unsigned int i = 0; i < DiscoveryList.size(); i++)
-       {
-           printf("Target \"%s\" is at address \"%s\"\n",
-                  DiscoveryList[i].GetTarget().c_str(),
-                  DiscoveryList[i].GetAddress().c_str());
-       }
+        for (unsigned int i = 0; i < DiscoveryList.size(); i++)
+        {
+            printf("Target \"%s\" is at address \"%s\"\n",
+                   DiscoveryList[i].GetTarget().c_str(),
+                   DiscoveryList[i].GetAddress().c_str());
+        }
+
+        // Now logout and disconnect 
+        iscsi.iSCSIDiscoveryLogout();
+
+        iscsi.iSCSIDisconnect();
+
+        // Now, connect to the second target found above
+        // You might have to adjust this!
+        iscsi.SetTarget(DiscoveryList[1].GetTarget());
+        iscsi.SetAddress(DiscoveryList[1].GetAddress());
+
+        printf("\nConnecting to target %s at address %s\n",
+               iscsi.GetTarget().c_str(),
+               iscsi.GetAddress().c_str());
+
+        iscsi.iSCSIConnect();
+
+        // Now, log in ...
+        iscsi.iSCSINormalLogin();
+
+        // Now, find out how many LUNs there are.
+        SCSIReportLuns reportLuns;
+
+        printf("\nSending REPORT LUNS request\n");
+        iscsi.iSCSIExecSCSISync(reportLuns, 0);  // Always against LUN 0
+
+        printf("Number of LUNs reported: %u\n", reportLuns.GetLunCount());
+
+        printf("\nLogging out and disconnecting\n");
+        iscsi.iSCSINormalLogout();
+
+        iscsi.iSCSIDisconnect();
+
+        printf("\n");
     }
     catch (CException &e)
     {
+        // If you want to handle redirects you need to check what sort of
+        // Exception message it is and return if it is a redirect
         printf("Caught Exception: %s\n", e.getDesc().c_str());
     }
 
