@@ -32,5 +32,14 @@ Top Level
 So, you can see that there are plenty of SCSI requests yet to write, but 
 most are easy.
 
+Also, a note on the use of boost::thread and the iSCSIBackground task. This is
+required if you plan on not sending requests on an iSCSI transport for long
+periods of time (in particular, longer than the target's NOP_IN timeout)
+because libiscis is syncrhrounous and does not get to handle NOP_IN requests
+until we call back into it. One reason you might not get a chance to call
+into libiscsi is that you have used ssh to shell into the system under test and
+shut the file system down to check its effect on the target and are waiting for
+that to complete.
+
 NOTE! You might need to apply the patch in patches to libiscsi until Ronnie
 Sahlberg has applied the changes I supplied him with.
