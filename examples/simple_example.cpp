@@ -85,6 +85,8 @@ static bool ReportOnLuns(myiSCSILibWrapper &iscsi,
 
         printf("\nAbout to issue TEST UNIT READY for lun %u\n", lun);
 
+        // If this is the first command, we expect a BUS RESET, so
+        // could test for that ...
         iscsi.iSCSIExecSCSISync(tur, lun);
         if (tur.GetStatus() != SCSI_STATUS_GOOD)
         {
