@@ -15,6 +15,7 @@ Top Level
   INSTALL  -- Simple installation document
   TODO     -- A list of things to possibly do
   Makefile -- a simple non-recursive Makefile
+  patches  -- Any patches that might be needed
   examples -- The location of example programs
   src      -- The source
     iSCSI  -- The iSCSI Transport. Other transports could be added
@@ -31,4 +32,5 @@ Top Level
 So, you can see that there are plenty of SCSI requests yet to write, but 
 most are easy.
 
-
+NOTE! You might need to apply the patch in patches to libiscsi until Ronnie
+Sahlberg has applied the changes I supplied him with.
