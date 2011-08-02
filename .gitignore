@@ -1,0 +1,4 @@
+*.o
+*.d
+libiscsi
+examples/simple_exampe
