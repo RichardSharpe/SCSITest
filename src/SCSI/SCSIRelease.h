@@ -15,24 +15,21 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  * Author(s): Richard Sharpe <realrichardsharpe@gmail.com>
- *            Asad Saeed, Scale Computing
  */
 
-/**
- * A SCSI Release class. All RELEASE requests should go in here.
- *
- * Author: Richard Sharpe
- */
+#ifndef __SCSIRelease_h__
+#define __SCSIRelease_h__
 
+#include "iSCSILibWrapper.h"
 #include "SCSIRequest.h"
-#include "SCSIReserve.h"
 
-SCSIReserve6::SCSIReserve6() :
-    SCSIRequest(6) 
+class SCSIRelease6 : public SCSIRequest
 {
-    setCdbByte(0, SCSI_OPCODE_RESERVE6); // That's a RESERVE 6 request
-}
+public:
+    SCSIRelease6();
+    ~SCSIRelease6();
 
-SCSIReserve6::~SCSIReserve6()
-{
-}
+private:
+};
+
+#endif
