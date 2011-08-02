@@ -35,6 +35,7 @@
 #include "SCSIReportLuns.h"
 #include "SCSITestUnitReady.h"
 #include "SCSIInquiry.h"
+#include "SCSIReadCapacity.h"
 
 #include "EString.h"
 #include "CException.h"
@@ -162,9 +163,9 @@ static bool ReportOnLuns(myiSCSILibWrapper &iscsi,
 
         iscsi.iSCSIExecSCSISync(supported, lun);
 
-        if (inq.GetStatus() != SCSI_STATUS_GOOD)
+        if (supported.GetStatus() != SCSI_STATUS_GOOD)
         {
-            printf("Inquiry fauled: Status %s, SenseKey: %s, ASCQ: %s\n",
+            printf("Inquiry failed: Status %s, SenseKey: %s, ASCQ: %s\n",
                    supported.StatusString().c_str(),
                    supported.SenseKeyString().c_str(),
                    supported.ASCQString().c_str());
@@ -195,6 +196,25 @@ static bool ReportOnLuns(myiSCSILibWrapper &iscsi,
         {
             printf("Weird, LUN %u does not suppot VPD Page 0!\n", lun);
         }
+
+        // Retrieve the capacity
+        SCSIReadCapacity10 capacity10;
+
+        iscsi.iSCSIExecSCSISync(capacity10, lun);
+
+        if (capacity10.GetStatus() != SCSI_STATUS_GOOD)
+        {
+            printf("ReadCapacity19 failed: Status %s, SenseKey: %s, ASCQ: %s\n",
+                   capacity10.StatusString().c_str(),
+                   capacity10.SenseKeyString().c_str(),
+                   capacity10.ASCQString().c_str());
+            return false;
+        }
+
+        printf("Lun %u has a capacity of %u blocks of length %u bytes!\n",
+               lun, 
+               capacity10.GetCapacity(),
+               capacity10.GetLogicalBlockLen());
     }
 
     return true;
