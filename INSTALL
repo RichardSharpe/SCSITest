@@ -1,5 +1,13 @@
 Firstly, download Ronnie Sahlberg's libiscsi source and build it.
 
+  $ git clone git://github.com/sahlberg/libiscsi.git
+  $ cd libiscsi
+  $ ./autogen.sh
+  $ ./configure
+  $ make
+
+(Don't type the dollar signs :-)
+
 Next, make a symbolic link from the top directory here to where you have put 
 the libiscsi package:
 
