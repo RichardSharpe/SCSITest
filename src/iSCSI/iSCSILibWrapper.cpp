@@ -69,6 +69,7 @@ void iSCSIBackGround::StopBackGroundTask()
         boost::mutex::scoped_lock lock(mWorkMutex);
 
         mStop = true;
+        mWorkCond.notify_one();  // Perhaps we should unlock first
 
         lock.unlock();  // Have to let go some time
 

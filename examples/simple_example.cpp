@@ -221,6 +221,9 @@ int main(int argc, char *argv[])
      * If you want multiple SCSI connections here, just declare more 
      * myiSCSILibWrapper objects and give them different initiator names.
      */
+    iscsi.SetInitiator(std::string("iqn.2011-07.com.testiscsi.initiator1"));
+
+    // This target name is not really relevant initially
     iscsi.SetTarget(std::string("iqn.2011-07.com.example:testtarget1"));
     iscsi.SetAddress(argv[1]);
 
