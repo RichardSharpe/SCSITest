@@ -1,0 +1,6 @@
+TODO:
+
+0. Add more examples?
+1. Fix the Makefiles ... make dependencies work better
+2. Add more SCSI Commands
+3. Possibly use SWIG to add Perl and Python interfaces
