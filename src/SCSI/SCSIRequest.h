@@ -166,6 +166,7 @@ protected:
     void setCdbByte(unsigned int byteOffset, uint8_t val);
     void setCdbShort(unsigned int byteOffset, uint16_t val);
     void setCdbLong(unsigned int byteOffset, uint32_t val);
+    void setCdbLongLong(unsigned int byteOffset, uint64_t val);
 
     /* Helper methods for writing values into buffers */
     void setBufferBitArray(uint8_t *buffer,
@@ -195,6 +196,11 @@ protected:
                        unsigned int bufferLength,
                        unsigned int byteOffset,
                        uint32_t val);
+
+    void setBufferLongLong(uint8_t *buffer,
+                           unsigned int bufferLength,
+                           unsigned int byteOffset,
+                           uint64_t val);
 
     void setBufferString(uint8_t *buffer,
                          unsigned int bufferLength,

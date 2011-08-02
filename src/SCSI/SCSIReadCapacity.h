@@ -36,4 +36,14 @@ public:
 private:
 };
 
+class SCSIReadCapacity16 : public SCSIRequest
+{
+public:
+    SCSIReadCapacity16();
+    ~SCSIReadCapacity16();
+
+    void SetLBA(uint64_t lba) { setCdbLongLong(2, lba); }
+    void SetAllocationLen(uint32_t len) { setCdbLong(10, len); }
+};
+
 #endif

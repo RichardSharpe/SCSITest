@@ -25,6 +25,7 @@
  */
 
 #include <arpa/inet.h>
+#include <endian.h>
 #include <cstdarg>
 
 #include "SCSIRequest.h"
@@ -63,6 +64,22 @@
                 __func__, _bitOffset, _bitLength);                             \
         throw CException(estr);                                                \
     }
+
+// Hack to get around not having htobe64
+#ifndef htobe64
+static uint64_t htobe64(uint64_t val)
+{
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+    // Separate the two halves and treat separately
+    uint64_t val_l[2];
+    val_l[0] = (uint64_t)htonl(val & 0xFFFFFFFF) << 32;
+    val_l[1] = htonl(val >> 32);
+    return val_l[0] | val_l[1]; 
+#else
+    return val;
+#endif
+}
+#endif
 
 SCSIRequest::SCSIRequest() :
     mExecuted(false),
@@ -150,6 +167,10 @@ void SCSIRequest::setCdbLong(unsigned int byteOffset, uint32_t val)
     setBufferLong(mTask->cdb, mTask->cdb_size, byteOffset, val);
 }
 
+void SCSIRequest::setCdbLongLong(unsigned int byteOffset, uint64_t val)
+{
+    setBufferLongLong(mTask->cdb, mTask->cdb_size, byteOffset, val);
+}
 
 /*
  * Convert Status codes into a string
@@ -394,6 +415,20 @@ void SCSIRequest::setBufferLong(uint8_t *buffer,
 
     val = htonl(val);
     memcpy(&buffer[byteOffset], &val, sizeof(uint32_t));
+}
+
+void SCSIRequest::setBufferLongLong(uint8_t *buffer,
+                                    unsigned int bufferLength,
+                                    unsigned int byteOffset,
+                                    uint64_t val)
+{
+    if (!buffer)
+        throw CException("Uninitialized Buffer");
+
+    CHECK_BUFFER_OVERFLOW(bufferLength, byteOffset, sizeof(uint32_t));
+
+    val = htobe64(val);
+    memcpy(&buffer[byteOffset], &val, sizeof(uint64_t));
 }
 
 void SCSIRequest::setBufferString(uint8_t *buffer,
