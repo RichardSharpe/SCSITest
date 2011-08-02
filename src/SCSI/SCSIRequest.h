@@ -21,6 +21,8 @@
 #ifndef __SCSIRequest_h__
 #define __SCSIRequest_h__
 
+#include <stdint.h>
+#include <string.h>
 #include <exception>
 #include <cstdarg>
 #include <string>

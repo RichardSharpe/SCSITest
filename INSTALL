@@ -13,6 +13,9 @@ the libiscsi package:
 
    ln -s /path/to/libiscsi ./libiscsi
 
+You will also need boost-devel installed if you are on a Linux system. Not
+sure what is needed on Windows etc.
+
 Then just run the make file.
 
 Note, this uses a non-recursive make.

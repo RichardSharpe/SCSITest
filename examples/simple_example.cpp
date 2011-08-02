@@ -28,6 +28,7 @@
  * Richard Sharpe, Scale Computing.
  */
 
+#include <stdio.h>
 #include <vector>
 #include <string>
 
