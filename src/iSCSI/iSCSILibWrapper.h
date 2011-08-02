@@ -148,11 +148,7 @@ public:
 
     struct wrapper_client_state *GetClientState() { return &mClient; }
 
-    void SetDiscoveryTarget(void) 
-    {
-        mTarget = "iqn.2008-09.com.scalecomputing:scqadleader";
-    }
-
+    void SetInitiator(const std::string &initiator) { mInitiator = initiator; }
     void SetTarget(const std::string &target) { mTarget = target; }
     const std::string &GetTarget(void) const { return mTarget; }
     void SetAddress(const std::string &address) { mAddress = address; }
@@ -223,6 +219,7 @@ protected:
     struct wrapper_client_state mClient;
     struct iscsi_context *mIscsi;
     struct pollfd mPfd;
+    std::string mInitiator;
     std::string mAddress;
     std::string mTarget;
     std::vector<WrapperDiscoveryPair> mDiscoveryPairs;

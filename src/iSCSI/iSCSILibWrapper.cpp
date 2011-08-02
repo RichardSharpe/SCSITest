@@ -27,6 +27,9 @@
 #include <algorithm>
 #include <signal.h>
 #include <errno.h>
+#include <boost/thread/thread.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition.hpp>
 #include "iSCSILibWrapper.h"
 #include "EString.h"
 #include "CException.h"
@@ -315,7 +318,13 @@ void iSCSILibWrapper::iSCSIConnect(void)
         throw CException(mErrorString);
     }
 
-    mIscsi = iscsi_create_context(mTarget.c_str());
+    /*
+     * Create a reasonable initiator name if one does not exist
+     */
+    if (mInitiator.size() == 0)
+      mInitiator.append("iqn.2011-07.com.scsitest:scsitest0");
+
+    mIscsi = iscsi_create_context(mInitiator.c_str());
     if (!mIscsi)
     {
         mError = true;

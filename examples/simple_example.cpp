@@ -42,7 +42,8 @@
 /*
  * A simple extension class for detecting redirects, if we want to. However,
  * you will have to allow some exceptions to continue below if you want to
- * have this work.
+ * have this work. We don't actually need this class in this example, but it
+ * is included to show what to do.
  */
 class myiSCSILibWrapper : public iSCSILibWrapper
 {
@@ -129,7 +130,13 @@ static bool ReportOnLuns(myiSCSILibWrapper &iscsi,
             return false;
         }
 
-        // Send an Inquiry
+        /*
+         * Send an Inquiry
+         * 
+         * The various Inquiry classes have methods that give access to the
+         * important fields. There are several sub-classes as well, like 
+         * SCSIInquirySupportedVPDPages and so forth.
+         */
 
         SCSIInquiry inq;  // Just a normal inquiry
 
@@ -210,7 +217,11 @@ int main(int argc, char *argv[])
      */
     myiSCSILibWrapper iscsi;
 
-    iscsi.SetTarget(std::string("iqn.2011-07.com.example:testtarget"));
+    /*
+     * If you want multiple SCSI connections here, just declare more 
+     * myiSCSILibWrapper objects and give them different initiator names.
+     */
+    iscsi.SetTarget(std::string("iqn.2011-07.com.example:testtarget1"));
     iscsi.SetAddress(argv[1]);
 
     try {

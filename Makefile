@@ -15,6 +15,11 @@ DIRS = src examples
 
 INCLUDES := $(patsubst %, $(TOPDIR)/%/Makefile, $(DIRS))
 
+LIBS := -l iscsi \
+        -l boost_date_time \
+        -l boost_thread \
+        -l boost_system
+
 # Include all we need ...
 # $(warning INCLUDES = $(INCLUDES))
 include $(INCLUDES)
@@ -41,7 +46,7 @@ all:	$(OBJECTS) $(TARGETS)
 include $(SOURCES:.cpp=.d)
 
 $(TARGETS): %: %.o
-	g++ -o $@ $< $(filter-out $<, $(OBJECTS)) -L libiscsi/lib -l iscsi
+	g++ -o $@ $< $(filter-out $<, $(OBJECTS)) -L libiscsi/lib $(LIBS)
 
 $(OBJECTS): %.o: %.cpp
 	g++ $(CFLAGS) -c $< -o $@
