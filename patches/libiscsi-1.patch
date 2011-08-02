@@ -1,0 +1,57 @@
+diff --git a/include/iscsi.h b/include/iscsi.h
+index 1f0b938..7c45d59 100644
+--- a/include/iscsi.h
++++ b/include/iscsi.h
+@@ -220,7 +220,12 @@ int iscsi_is_logged_in(struct iscsi_context *iscsi);
+ enum scsi_status {
+        SCSI_STATUS_GOOD                 = 0,
+        SCSI_STATUS_CHECK_CONDITION      = 2,
+-       SCSI_STATUS_RESERVATION_CONFLICT = 0x18,
++       SCSI_STATUS_CONDITION_MET        = 4,
++       SCSI_STATUS_BUSY                 = 8,
++       SCSI_STATUS_RESERVATION_CONFLICT = 0x00000018,
++       SCSI_STATUS_TASK_SET_FULL        = 0x00000028,
++       SCSI_STATUS_ACA_ACTIVE           = 0x00000030,
++       SCSI_STATUS_TASK_ABORTED         = 0x00000040,
+        SCSI_STATUS_CANCELLED            = 0x0f000000,
+        SCSI_STATUS_ERROR                = 0x0f000001
+ };
+diff --git a/include/scsi-lowlevel.h b/include/scsi-lowlevel.h
+index 8eb3c95..51dec4d 100644
+--- a/include/scsi-lowlevel.h
++++ b/include/scsi-lowlevel.h
+@@ -23,12 +23,15 @@ enum scsi_opcode {
+        SCSI_OPCODE_TESTUNITREADY      = 0x00,
+        SCSI_OPCODE_READ6              = 0x08,
+        SCSI_OPCODE_INQUIRY            = 0x12,
++       SCSI_OPCODE_RESERVE6           = 0x16,
+        SCSI_OPCODE_MODESENSE6         = 0x1a,
+        SCSI_OPCODE_READCAPACITY10     = 0x25,
+        SCSI_OPCODE_READ10             = 0x28,
+        SCSI_OPCODE_WRITE10            = 0x2A,
+        SCSI_OPCODE_SYNCHRONIZECACHE10 = 0x35,
+-       SCSI_OPCODE_REPORTLUNS         = 0xA0
++       SCSI_OPCODE_REPORTLUNS         = 0xA0,
++       SCSI_OPCODE_PERSISTENTRESERVEIN  = 0x5E,
++       SCSI_OPCODE_PERSISTENTRESERVEOUT = 0x5F
+ };
+ 
+ /* sense keys */
+@@ -485,5 +488,17 @@ struct scsi_task *scsi_cdb_write10(uint32_t lba, uint32_t x
+ struct scsi_task *scsi_cdb_synchronizecache10(int lba, int num_blocks,
+                        int syncnv, int immed);
+ 
++/*
++ * PERSITENTRESERVEIN/PERSISTENTRESERVEOUT
++ */
++enum scsi_persistent_reservation_type {
++       RESERVATION_TYPE_WRITE_EXCLUSIVE                        = 0x01,
++       RESERVATION_TYPE_EXCLUSIVE_ACCESS                       = 0x03,
++       RESERVATION_TYPE_WRITE_EXCLUSIVE_REGISTRANTS_ONLY       = 0x05,
++       RESERVATION_TYPE_EXCLUSIVE_ACCESS_REGISTRANTS_ONLY      = 0x06,
++       RESERVATION_TYPE_WRITE_EXCLUSIVE_ALL_REGISTRANTS        = 0x07,
++       RESERVATION_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS       = 0x08,
++};
++
+ #endif /* __scsi_lowlevel_h__ */
+ 
