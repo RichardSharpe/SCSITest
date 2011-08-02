@@ -151,7 +151,7 @@ static bool ReportOnLuns(myiSCSILibWrapper &iscsi,
             return false;
         }
 
-        printf("T10 Vendore ID for LUN %u is \"%s\"\n",
+        printf("T10 Vendor ID for LUN %u is \"%s\"\n",
                lun, inq.GetT10VendorID().c_str());
         printf("Product ID for LUN %u is \"%s\"\n",
                lun, inq.GetProductID().c_str());

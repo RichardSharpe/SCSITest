@@ -43,3 +43,36 @@ that to complete.
 
 NOTE! You might need to apply the patch in patches to libiscsi until Ronnie
 Sahlberg has applied the changes I supplied him with.
+
+The following show what the simple_example.cpp program does:
+
+[(master): iSCSILibWrapper] $ ./examples/simple_example 10.200.3.116
+Connecting to iqn.2011-07.com.example:testtarget1:10.200.3.116
+Target "iqn.2008-09.com.scalecomputing:10.200.3.116.test" is at address "10.200.3.116:3260,1"
+Target "iqn.2008-09.com.scalecomputing:10.200.3.116.target2" is at address "10.200.3.116:3260,1"
+Target "iqn.2008-09.com.scalecomputing:10.200.3.116.target1" is at address "10.200.3.116:3260,1"
+
+Connecting to target iqn.2008-09.com.scalecomputing:10.200.3.116.target2 at address 10.200.3.116:3260,1
+
+Sending REPORT LUNS request
+Number of LUNs reported: 2
+
+About to issue TEST UNIT READY for lun 0
+Received expected BUS RESET
+T10 Vendor ID for LUN 0 is "SCALE   "
+Product ID for LUN 0 is "Storage Node"
+Product Rev for LUN 0 is "56  "
+Lun 0 supports VPD Page 0, checking page 0x80
+LUN 0 Unit Serial Num is "dd979cf0"
+
+About to issue TEST UNIT READY for lun 1
+Received expected BUS RESET
+T10 Vendor ID for LUN 1 is "SCALE   "
+Product ID for LUN 1 is "Storage Node"
+Product Rev for LUN 1 is "56  "
+Lun 1 supports VPD Page 0, checking page 0x80
+LUN 1 Unit Serial Num is "F573619C2BF78001"
+
+Logging out and disconnecting
+
+Test done!
