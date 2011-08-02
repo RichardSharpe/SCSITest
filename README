@@ -1,11 +1,12 @@
 SCSITest is a software library that allows you to create SCSI tests.
 
-It currently layers on top of Ronnie Sahlberg's libiscsi package. It is 
-written in C++.
+It currently layers on top of the libiscsi package. It is written in C++.
 
 It could also wrap other facilities, like SCSI passthrough on Linux or Windows.
 (SCSI Passthrough using sg devices on Linux. There are examples of how to do
 SCSI Passthrough on Windows out there.)
+
+libiscsi was written by Ronnie Sahlberg.
 
 The current structure is:
 
@@ -25,9 +26,11 @@ Top Level
       SCSIInquiry
       SCSIReportLuns
       SCSIReserve
+      SCSIRelease
       SCSIPersistentReserveIn
       SCSIPersistentReserveOut
       SCSIRead
+      SCSIReadCapacity
 
 So, you can see that there are plenty of SCSI requests yet to write, but 
 most are easy.
