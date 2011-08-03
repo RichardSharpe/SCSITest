@@ -15,10 +15,10 @@ DIRS = src examples
 
 INCLUDES := $(patsubst %, $(TOPDIR)/%/Makefile, $(DIRS))
 
-LIBS := -l iscsi \
-        -l boost_date_time \
-        -l boost_thread \
-        -l boost_system
+LIBS := iscsi \
+        boost_date_time \
+        boost_thread \
+        boost_system
 
 # Include all we need ...
 # $(warning INCLUDES = $(INCLUDES))
@@ -33,6 +33,7 @@ $(warning SOURCES = $(SOURCES))
 #$(warning CFLAGS = $(CFLAGS))
 #$(warning TARGETS = $(TARGETS))
 
+.PHONY: all
 # Gotta figure out a better method ... maybe shared libraries
 all:	$(OBJECTS) $(TARGETS)
 
@@ -46,7 +47,8 @@ all:	$(OBJECTS) $(TARGETS)
 include $(SOURCES:.cpp=.d)
 
 $(TARGETS): %: %.o
-	g++ -o $@ $< $(filter-out $<, $(OBJECTS)) -L libiscsi/lib $(LIBS)
+	g++ -o $@ $< $(filter-out $<, $(OBJECTS)) -L libiscsi/lib \
+		$(addprefix -l, $(LIBS))
 
 $(OBJECTS): %.o: %.cpp
 	g++ $(CFLAGS) -c $< -o $@
