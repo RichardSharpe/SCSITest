@@ -1,8 +1,10 @@
 TODO:
 
-0. Add a Version Number
-1. Add more examples?
-2. Fix the Makefiles ... make dependencies work better
-3. Add more SCSI Commands
-4. Possibly use SWIG to add Perl and Python interfaces
-5. Add more documentation
+0. Use autoconf etc to get around the problem with libboost_thread-mt on 
+   some platforms.
+1. Add a Version Number
+2. Add more examples?
+3. Fix the Makefiles ... make dependencies work better
+4. Add more SCSI Commands
+5. Possibly use SWIG to add Perl and Python interfaces
+6. Add more documentation
