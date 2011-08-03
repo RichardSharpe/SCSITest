@@ -1,7 +1,10 @@
 # Main Makefile for iSCSILibWrapper
 # This Makefile is not recursive. Rather it includes Makefiles from below
+# @configure_input@
 
-TOPDIR := $(shell pwd)
+SRCDIR := @srcdir@
+
+VPATH  := @srcdir@
 
 SOURCES :=
 
@@ -13,7 +16,7 @@ TARGETS :=
 
 DIRS = src examples
 
-INCLUDES := $(patsubst %, $(TOPDIR)/%/Makefile, $(DIRS))
+INCLUDES := $(patsubst %, $(SRCDIR)/%/Makefile, $(DIRS))
 
 LIBS := iscsi \
         boost_date_time \
