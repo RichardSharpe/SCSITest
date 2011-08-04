@@ -7,6 +7,8 @@ AC_CONFIG_SRCDIR([examples/simple_example.cpp])
 AC_PROG_CXX
 AC_PROG_CC
 
+AC_BOOST_BASE([1.43.0])
+AC_BOOST_THREAD
 # Checks for libraries.
 
 # Checks for header files.
